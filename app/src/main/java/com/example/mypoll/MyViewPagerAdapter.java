@@ -1,9 +1,11 @@
 package com.example.mypoll;
 
+import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
 import androidx.fragment.app.FragmentPagerAdapter;
+import androidx.viewpager.widget.PagerAdapter;
 
 public class MyViewPagerAdapter extends FragmentPagerAdapter {
     public MyViewPagerAdapter(FragmentManager fm) {
@@ -35,4 +37,5 @@ public class MyViewPagerAdapter extends FragmentPagerAdapter {
     public int getCount() {
         return 3;
     }
+
 }

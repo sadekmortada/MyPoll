@@ -4,7 +4,8 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context=".RegisterActivity">
+    tools:context=".RegisterActivity"
+    android:background="@drawable/mypollbg">
 
     <androidx.appcompat.widget.Toolbar
         android:layout_width="match_parent"
@@ -16,12 +17,13 @@
         android:theme="@style/Widget.AppCompat.Toolbar"
         android:background="@color/colorPrimary"
         app:titleTextColor="@color/colorWhite"
-        app:title="Create account"
+        app:title="Create new account"
         android:paddingTop="15dp"/>
     <ImageView
         android:id="@+id/register_police"
-        android:layout_width="100dp"
-        android:layout_height="180dp"
+        android:layout_width="80dp"
+        android:layout_height="145dp"
+        android:layout_marginTop="5dp"
         android:layout_marginStart="0dp"
         android:layout_marginEnd="0dp"
         app:layout_constraintTop_toBottomOf="@id/register_toolbar"
@@ -31,20 +33,50 @@
         tools:layout_editor_absoluteY="80dp" />
 
     <EditText
-        android:id="@+id/register_email"
+        android:id="@+id/register_name"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_marginStart="24dp"
         android:layout_marginTop="0dp"
         android:layout_marginEnd="24dp"
-        android:drawableStart="@drawable/email"
+        android:drawableStart="@drawable/user"
         android:textColor="@color/colorPrimaryDark"
-        android:textColorHint="@color/colorPrimaryHint"
-        android:hint="Email"
+        android:hint="User Name"
         android:inputType="textEmailAddress"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/register_police" />
+
+    <EditText
+        android:id="@+id/register_email"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="24dp"
+        android:layout_marginTop="0dp"
+        android:layout_marginEnd="0dp"
+        android:drawableStart="@drawable/email"
+        android:textColor="@color/colorPrimaryDark"
+        android:hint="example_me"
+        android:maxLength="25"
+        android:inputType="textEmailAddress"
+        app:layout_constraintEnd_toStartOf="@+id/mypoll_email"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/register_name" />
+
+    <TextView
+        android:id="@+id/mypoll_email"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="0dp"
+        android:layout_marginTop="11dp"
+        android:layout_marginEnd="24dp"
+        android:text="@mypoll.com"
+        android:textColor="@color/colorPrimaryDark"
+        android:textSize="22sp"
+        android:enabled="false"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toEndOf="@+id/register_email"
+        app:layout_constraintTop_toBottomOf="@+id/register_name" />
 
     <EditText
         android:id="@+id/register_password"
@@ -57,7 +89,6 @@
         android:hint="Choose Password"
         android:inputType="textPassword"
         android:textColor="@color/colorPrimaryDark"
-        android:textColorHint="@color/colorPrimaryHint"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/register_email" />
@@ -73,7 +104,6 @@
         android:hint="Confirm Password"
         android:inputType="textPassword"
         android:textColor="@color/colorPrimaryDark"
-        android:textColorHint="@color/colorPrimaryHint"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/register_password" />
@@ -87,6 +117,7 @@
         android:layout_marginEnd="24dp"
         android:background="@color/colorPrimary"
         android:text="Register"
+        android:onClick="register"
         android:textAllCaps="false"
         android:textColor="@color/colorWhite"
         android:textSize="20sp"
@@ -101,10 +132,10 @@
         android:layout_marginTop="20dp"
         android:layout_marginEnd="28dp"
         android:text="Have an account?"
-        android:textColor="@color/colorPrimaryDark"
-        android:textSize="15sp"
+        android:textColor="@color/colorPrimary"
+        android:textSize="16sp"
         android:onClick="toLogin"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/registerButton"></TextView>
+        app:layout_constraintTop_toBottomOf="@+id/registerButton"/>
 
 </androidx.constraintlayout.widget.ConstraintLayout>

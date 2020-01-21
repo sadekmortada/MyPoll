@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context=".OwnerActivity"
+    android:background="@drawable/mypollbg"
+    android:padding="20dp">
+
+    <de.hdodenhof.circleimageview.CircleImageView
+        android:id="@+id/owner_poll_image"
+        android:layout_width="110dp"
+        android:layout_height="110dp"
+        android:src="@drawable/pollbg"
+        app:civ_border_color="@color/colorPrimary"
+        app:civ_border_width="5dp"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="share key with friends\nlet them participate !!"
+        app:layout_constraintStart_toEndOf="@+id/owner_poll_image"
+        app:layout_constraintBottom_toTopOf="@+id/key_container"
+        app:layout_constraintEnd_toEndOf="parent"
+        android:textColor="@color/colorPrimaryDark"
+        android:layout_marginBottom="10dp" />
+
+    <LinearLayout
+        android:id="@+id/key_container"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        app:layout_constraintStart_toEndOf="@+id/owner_poll_image"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintBottom_toBottomOf="@+id/owner_poll_image">
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Key:"
+        android:textSize="20sp"
+        android:layout_marginEnd="5dp"
+        android:textColor="@color/colorPrimaryDark"/>
+    <TextView
+        android:id="@+id/poll_key"
+        android:layout_weight="1"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:paddingStart="7dp"
+        android:paddingEnd="7dp"
+        android:text="-xxxxxxxxxxxxxxxxxxx"
+        android:background="@drawable/smallblueframe"
+        android:textColor="@color/colorPrimaryDark" />
+    <ImageButton
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:onClick="copyKey"
+        android:layout_marginStart="5dp"
+        android:layout_gravity="center"
+        app:layout_constraintStart_toEndOf="@+id/poll_key"
+        android:background="?attr/actionModeCopyDrawable"/>
+</LinearLayout>
+</androidx.constraintlayout.widget.ConstraintLayout>

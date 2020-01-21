@@ -8,10 +8,12 @@ import androidx.fragment.app.FragmentManager;
 import androidx.viewpager.widget.ViewPager;
 
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.ViewParent;
+import android.view.WindowManager;
 
 
 import com.google.android.material.tabs.TabLayout;
@@ -25,6 +27,7 @@ public class MainActivity extends AppCompatActivity {
     private TabLayout tabLayout;
     private Toolbar toolbar;
     private MyViewPagerAdapter myViewPagerAdapter;
+    private SharedPreferences sharedPreferences;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -36,7 +39,7 @@ public class MainActivity extends AppCompatActivity {
         toolbar=findViewById(R.id.main_toolbar);
         setSupportActionBar(toolbar);
         firebaseAuth=FirebaseAuth.getInstance();
-
+        sharedPreferences=getSharedPreferences("user",MODE_PRIVATE);
         viewPager=findViewById(R.id.viewPager);
         tabLayout=findViewById(R.id.tabLayout);
         tabLayout.setupWithViewPager(viewPager);
@@ -61,12 +64,12 @@ public class MainActivity extends AppCompatActivity {
     public boolean onOptionsItemSelected(@NonNull MenuItem item) {
         switch (item.getItemId()){
             case R.id.main_settings:
-
                 break;
             case R.id.help:
-
                 break;
             case R.id.sign_out:
+                CurrentFragment.reset();
+                sharedPreferences.edit().clear().apply();
                 firebaseAuth.signOut();
                 startActivity(new Intent(this,LoginActivity.class));
                 break;
