@@ -54,8 +54,8 @@ import java.util.concurrent.ExecutionException;
  */
 public class CurrentFragment extends Fragment {
     private PollAdapter pollAdapter;
-    private static ArrayList<PollView> arrayList;
-    public  static ArrayList<String> keys;
+    public static ArrayList<PollView> arrayList;
+    public static ArrayList<String> keys;
     private ListView listView;
     private DatabaseReference databaseReference;
     private StorageReference storageReference;
@@ -204,6 +204,7 @@ public class CurrentFragment extends Fragment {
         super.onResume();
         if(reset){
             arrayList.clear();
+            keys.clear();
             pollAdapter.notifyDataSetChanged();
             initialize();
             fillArray();

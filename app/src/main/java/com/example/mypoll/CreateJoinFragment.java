@@ -1,7 +1,9 @@
 package com.example.mypoll;
 
 
+import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 
 import androidx.annotation.NonNull;
@@ -40,6 +42,7 @@ public class CreateJoinFragment extends Fragment {
     private DatabaseReference databaseReference;
     private FirebaseAuth firebaseAuth;
     private FirebaseUser firebaseUser;
+    private SharedPreferences sharedPreferences;
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
@@ -82,17 +85,19 @@ public class CreateJoinFragment extends Fragment {
                                             Intent intent=new Intent(getContext(),ParticipantActivity.class);
                                             intent.putExtra("key",key);
                                             boolean flag=false;
-//                                            for(int i=0;i<CurrentFragment.keys.size();i++){
-//                                                if(key.equals(CurrentFragment.keys.get(i))){
-//                                                    Toast.makeText(getContext(),"You already joined before",Toast.LENGTH_SHORT).show();
-//                                                    flag=true;
-//                                                    break;
-//                                                }
-//                                            }
+                                            for(int i=0;i<CurrentFragment.keys.size();i++){
+                                                if(key.equals(CurrentFragment.keys.get(i))){
+                                                    Toast.makeText(getContext(),"You already joined before",Toast.LENGTH_SHORT).show();
+                                                    flag=true;
+                                                    break;
+                                                }
+                                            }
                                             if(!flag) {
                                                 databaseReference.child("users").child(firebaseUser.getUid()).child("polls").child(key).setValue("");
                                                 HashMap<String,Object> hashMap=new HashMap<>();
                                                 hashMap.put("from",firebaseUser.getUid());
+                                                hashMap.put("title","\""+sharedPreferences.getString("name","")+"\" joined your poll \""+ds.child("title").getValue().toString()+"\"");
+                                                hashMap.put("body","Please Check Out");
                                                 databaseReference.child("notifications").child(ownerId).push().setValue(hashMap);
                                             }
                                             startActivity(intent);
@@ -124,6 +129,7 @@ public class CreateJoinFragment extends Fragment {
         editText2=view.findViewById(R.id.join_poll);
         create=view.findViewById(R.id.create_poll_button);
         join=view.findViewById(R.id.join_poll_button);
+        sharedPreferences=getContext().getSharedPreferences("user", Context.MODE_PRIVATE);
     }
 
     @Override
