@@ -56,6 +56,7 @@ public class CurrentFragment extends Fragment {
     private PollAdapter pollAdapter;
     public static ArrayList<PollView> arrayList;
     public static ArrayList<String> keys;
+    public static ArrayList<String> options;
     private ListView listView;
     private DatabaseReference databaseReference;
     private StorageReference storageReference;
@@ -82,7 +83,7 @@ public class CurrentFragment extends Fragment {
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
                 Intent intent;
                 if(arrayList.get(position).getOwner().equals("by you"))
-                    intent=new Intent(getContext(),OwnerActivity.class);
+                    intent = new Intent(getContext(), OwnerActivity.class);
                 else
                     intent=new Intent(getContext(),ParticipantActivity.class);
                 intent.putExtra("key",keys.get(position));
@@ -99,6 +100,7 @@ public class CurrentFragment extends Fragment {
         listView = view.findViewById(R.id.current_listview);
         listView.setAdapter(pollAdapter);
         keys=new ArrayList<>();
+        options=new ArrayList<>();
     }
 
     public void initialize(){
@@ -131,6 +133,11 @@ public class CurrentFragment extends Fragment {
                             new ImageDownloader().execute(url.toString(), title, owner, date, time);
                         else
                             new ImageDownloader().execute(null, title, owner, date, time);
+                        Iterator iterator=dataSnapshot.child("options").getChildren().iterator();
+                        String string="";
+                        while(iterator.hasNext())
+                            string+=((DataSnapshot)iterator.next()).getKey().toString()+"%#&";
+                        options.add(string);
                     }
                     @Override
                     public void onCancelled(@NonNull DatabaseError databaseError) {
@@ -205,6 +212,7 @@ public class CurrentFragment extends Fragment {
         if(reset){
             arrayList.clear();
             keys.clear();
+            options.clear();
             pollAdapter.notifyDataSetChanged();
             initialize();
             fillArray();

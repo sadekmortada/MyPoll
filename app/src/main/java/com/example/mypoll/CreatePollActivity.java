@@ -170,7 +170,7 @@ public class CreatePollActivity extends AppCompatActivity {
                 return;
             }
             else
-                options.put("option " + (i+1), option);
+                options.put(option, "");
         }
         Calendar calendar=Calendar.getInstance(TimeZone.getTimeZone(Time.getCurrentTimezone()));
         SimpleDateFormat simpleDateFormat=new SimpleDateFormat("dd MMM, yyyy");

@@ -86,6 +86,7 @@ public class CreateJoinFragment extends Fragment {
                                         if(ds.child("state").getValue().equals("opened")) {
                                             Intent intent=new Intent(getContext(),ParticipantActivity.class);
                                             intent.putExtra("key",key);
+                                            intent.putExtra("position",CurrentFragment.keys.size());
                                             boolean flag=false;
                                             for(int i=0;i<CurrentFragment.keys.size();i++){
                                                 if(key.equals(CurrentFragment.keys.get(i))){

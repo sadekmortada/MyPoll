@@ -41,6 +41,7 @@
         android:layout_marginEnd="24dp"
         android:drawableStart="@drawable/user"
         android:textColor="@color/colorPrimaryDark"
+        android:maxLength="25"
         android:hint="User Name"
         android:inputType="textEmailAddress"
         app:layout_constraintEnd_toEndOf="parent"
