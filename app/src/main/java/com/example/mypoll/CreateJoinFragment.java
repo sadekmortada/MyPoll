@@ -7,6 +7,7 @@ import android.content.SharedPreferences;
 import android.os.Bundle;
 
 import androidx.annotation.NonNull;
+import androidx.core.widget.NestedScrollView;
 import androidx.fragment.app.Fragment;
 
 import android.provider.ContactsContract;
@@ -43,14 +44,13 @@ public class CreateJoinFragment extends Fragment {
     private FirebaseAuth firebaseAuth;
     private FirebaseUser firebaseUser;
     private SharedPreferences sharedPreferences;
+    private NestedScrollView nestedScrollView;
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         // Inflate the layout for this fragment
         View view=inflater.inflate(R.layout.fragment_create_join, container, false);
-
         initialize(view);
-
         create.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -98,7 +98,7 @@ public class CreateJoinFragment extends Fragment {
                                                 hashMap.put("from",firebaseUser.getUid());
                                                 hashMap.put("title","\""+sharedPreferences.getString("name","")+"\" joined your poll \""+ds.child("title").getValue().toString()+"\"");
                                                 hashMap.put("body","Please Check Out");
-                                                databaseReference.child("notifications").child(ownerId).push().setValue(hashMap);
+                                                databaseReference.child("notifications").child(ownerId).push().updateChildren(hashMap);
                                             }
                                             startActivity(intent);
                                             editText1.setText("");
@@ -110,6 +110,8 @@ public class CreateJoinFragment extends Fragment {
                                         Toast.makeText(getContext(),"You own this poll !",Toast.LENGTH_SHORT).show();
                                     break;
                                 }
+                                else
+                                    Toast.makeText(getContext(),"Wrong key",Toast.LENGTH_SHORT).show();
                             }
                         }
                         @Override
@@ -130,11 +132,18 @@ public class CreateJoinFragment extends Fragment {
         create=view.findViewById(R.id.create_poll_button);
         join=view.findViewById(R.id.join_poll_button);
         sharedPreferences=getContext().getSharedPreferences("user", Context.MODE_PRIVATE);
+        nestedScrollView=view.findViewById(R.id.create_join_scroll);
+    }
+
+    @Override
+    public void onStart() {
+        super.onStart();
     }
 
     @Override
     public void onResume() {
         super.onResume();
+        nestedScrollView.animate().alpha(1).setDuration(1000);
         databaseReference= FirebaseDatabase.getInstance().getReference();
         firebaseAuth=FirebaseAuth.getInstance();
         firebaseUser=firebaseAuth.getCurrentUser();
