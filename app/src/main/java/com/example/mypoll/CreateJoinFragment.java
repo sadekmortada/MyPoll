@@ -75,10 +75,12 @@ public class CreateJoinFragment extends Fragment {
                         @Override
                         public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
                             Iterator iterator=dataSnapshot.getChildren().iterator();
+                            boolean exist=false;
                             while(iterator.hasNext()){
                                 DataSnapshot ds=(DataSnapshot)iterator.next();
                                 String string=ds.getKey();
                                 if(key.equals(string)){
+                                    exist=true;
                                     String ownerId=ds.child("owner_id").getValue().toString();
                                     if(!firebaseUser.getUid().equals(ds.child("owner_id").getValue().toString())) {
                                         if(ds.child("state").getValue().equals("opened")) {
@@ -96,7 +98,7 @@ public class CreateJoinFragment extends Fragment {
                                                 databaseReference.child("users").child(firebaseUser.getUid()).child("polls").child(key).setValue("");
                                                 HashMap<String,Object> hashMap=new HashMap<>();
                                                 hashMap.put("from",firebaseUser.getUid());
-                                                hashMap.put("title","\""+sharedPreferences.getString("name","")+"\" joined your poll \""+ds.child("title").getValue().toString()+"\"");
+                                                hashMap.put("title","\""+sharedPreferences.getString("user_name","")+"\" joined your poll \""+ds.child("title").getValue().toString()+"\"");
                                                 hashMap.put("body","Please Check Out");
                                                 databaseReference.child("notifications").child(ownerId).push().updateChildren(hashMap);
                                             }
@@ -110,9 +112,9 @@ public class CreateJoinFragment extends Fragment {
                                         Toast.makeText(getContext(),"You own this poll !",Toast.LENGTH_SHORT).show();
                                     break;
                                 }
-                                else
-                                    Toast.makeText(getContext(),"Wrong key",Toast.LENGTH_SHORT).show();
                             }
+                            if(!exist)
+                                Toast.makeText(getContext(),"Wrong key",Toast.LENGTH_SHORT).show();
                         }
                         @Override
                         public void onCancelled(@NonNull DatabaseError databaseError) {

@@ -5,6 +5,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import android.content.ClipData;
 import android.content.ClipboardManager;
 import android.content.Context;
+import android.content.Intent;
 import android.os.Bundle;
 import android.view.View;
 import android.view.WindowManager;
@@ -13,7 +14,7 @@ import android.widget.Toast;
 
 public class OwnerActivity extends AppCompatActivity {
     private String key;
-    private TextView pollKey;
+    private TextView pollKey,pollTitle;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -23,9 +24,12 @@ public class OwnerActivity extends AppCompatActivity {
     }
 
     public void initialize(){
-        key=getIntent().getStringExtra("key");
+        Intent intent=getIntent();
+        pollTitle=findViewById(R.id.owner_poll_title);
+        key=intent.getStringExtra("key");
         pollKey=findViewById(R.id.poll_key);
         pollKey.setText(key);
+        pollTitle.setText(CurrentFragment.arrayList.get(intent.getIntExtra("position",0)).getTitle());
     }
 
     public void copyKey(View view) {
