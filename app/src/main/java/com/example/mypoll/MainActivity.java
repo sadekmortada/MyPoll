@@ -21,6 +21,7 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.ViewParent;
 import android.view.WindowManager;
+import android.widget.Toast;
 
 
 import com.google.android.material.tabs.TabLayout;
@@ -51,36 +52,35 @@ public class MainActivity extends AppCompatActivity {
         initialize();
     }
     public void notification(){
+            databaseReference.addChildEventListener(new ChildEventListener() {
+                @Override
+                public void onChildAdded(@NonNull DataSnapshot dataSnapshot, @Nullable String s) {
+                    builder.setContentTitle(dataSnapshot.child("title").getValue().toString());
+                    builder.setContentText(dataSnapshot.child("body").getValue().toString());
+                    notification = builder.build();
+                    notificationManager.notify(0, notification);
+                    databaseReference.setValue("");
+                }
+                @Override
+                public void onChildChanged(@NonNull DataSnapshot dataSnapshot, @Nullable String s) {
 
-        databaseReference.addChildEventListener(new ChildEventListener() {
-            @Override
-            public void onChildAdded(@NonNull DataSnapshot dataSnapshot, @Nullable String s) {
-                builder.setContentTitle(dataSnapshot.child("title").getValue().toString());
-                builder.setContentText(dataSnapshot.child("body").getValue().toString());
-                notification=builder.build();
-                notificationManager.notify(123,notification);
-            }
+                }
 
-            @Override
-            public void onChildChanged(@NonNull DataSnapshot dataSnapshot, @Nullable String s) {
+                @Override
+                public void onChildRemoved(@NonNull DataSnapshot dataSnapshot) {
 
-            }
+                }
 
-            @Override
-            public void onChildRemoved(@NonNull DataSnapshot dataSnapshot) {
+                @Override
+                public void onChildMoved(@NonNull DataSnapshot dataSnapshot, @Nullable String s) {
 
-            }
+                }
 
-            @Override
-            public void onChildMoved(@NonNull DataSnapshot dataSnapshot, @Nullable String s) {
+                @Override
+                public void onCancelled(@NonNull DatabaseError databaseError) {
 
-            }
-
-            @Override
-            public void onCancelled(@NonNull DatabaseError databaseError) {
-
-            }
-        });
+                }
+            });
     }
 
     public void initialize(){
@@ -113,8 +113,10 @@ public class MainActivity extends AppCompatActivity {
         firebaseUser=firebaseAuth.getCurrentUser();
         if(firebaseUser==null)
             startActivity(new Intent(this,LoginActivity.class));
-        else
-            databaseReference= FirebaseDatabase.getInstance().getReference("notification").child(firebaseUser.getUid());
+        else{
+            databaseReference= FirebaseDatabase.getInstance().getReference("notifications").child(firebaseUser.getUid());
+            notification();
+        }
     }
 
     @Override
