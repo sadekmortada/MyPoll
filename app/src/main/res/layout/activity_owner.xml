@@ -140,7 +140,7 @@
             android:id="@+id/groupChatLinear"
             android:orientation="horizontal">
             <EditText
-                android:id="@+id/groupMessage"
+                android:id="@+id/owner_comment"
                 android:layout_width="0dp"
                 android:layout_weight="1"
                 android:layout_height="wrap_content"

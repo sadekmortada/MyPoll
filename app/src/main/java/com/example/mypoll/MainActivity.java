@@ -4,8 +4,6 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
-import androidx.fragment.app.Fragment;
-import androidx.fragment.app.FragmentManager;
 import androidx.viewpager.widget.ViewPager;
 
 import android.app.Notification;
@@ -19,10 +17,6 @@ import android.graphics.BitmapFactory;
 import android.os.Bundle;
 import android.view.Menu;
 import android.view.MenuItem;
-import android.view.ViewParent;
-import android.view.WindowManager;
-import android.widget.Toast;
-
 
 import com.google.android.material.tabs.TabLayout;
 import com.google.firebase.auth.FirebaseAuth;
@@ -34,52 +28,46 @@ import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 
 public class MainActivity extends AppCompatActivity {
-    private FirebaseAuth firebaseAuth;
-    private FirebaseUser firebaseUser;
+    private static FirebaseAuth firebaseAuth;
+    private static FirebaseUser firebaseUser;
     private ViewPager viewPager;
     private TabLayout tabLayout;
     private Toolbar toolbar;
     private MyViewPagerAdapter myViewPagerAdapter;
-    private DatabaseReference databaseReference;
+    private static DatabaseReference databaseReference;
     private SharedPreferences sharedPreferences;
-    private Notification.Builder builder;
-    private Notification notification;
-    private NotificationManager notificationManager;
+    private static Notification.Builder builder;
+    private static Notification notification;
+    private static NotificationManager notificationManager;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         initialize();
+        if(firebaseUser!=null)
+            notification();
     }
-    public void notification(){
-            databaseReference.addChildEventListener(new ChildEventListener() {
+    public static void notification(){
+        firebaseUser=firebaseAuth.getCurrentUser();
+        databaseReference= FirebaseDatabase.getInstance().getReference("notifications").child(firebaseUser.getUid());
+        databaseReference.setValue(""); //erase the database before listening
+        databaseReference.addChildEventListener(new ChildEventListener() {
                 @Override
                 public void onChildAdded(@NonNull DataSnapshot dataSnapshot, @Nullable String s) {
                     builder.setContentTitle(dataSnapshot.child("title").getValue().toString());
                     builder.setContentText(dataSnapshot.child("body").getValue().toString());
                     notification = builder.build();
                     notificationManager.notify(0, notification);
-                    databaseReference.setValue("");
+                    databaseReference.setValue(""); //erase the database after listening
                 }
                 @Override
-                public void onChildChanged(@NonNull DataSnapshot dataSnapshot, @Nullable String s) {
-
-                }
-
+                public void onChildChanged(@NonNull DataSnapshot dataSnapshot, @Nullable String s) { }
                 @Override
-                public void onChildRemoved(@NonNull DataSnapshot dataSnapshot) {
-
-                }
-
+                public void onChildRemoved(@NonNull DataSnapshot dataSnapshot) { }
                 @Override
-                public void onChildMoved(@NonNull DataSnapshot dataSnapshot, @Nullable String s) {
-
-                }
-
+                public void onChildMoved(@NonNull DataSnapshot dataSnapshot, @Nullable String s) { }
                 @Override
-                public void onCancelled(@NonNull DatabaseError databaseError) {
-
-                }
+                public void onCancelled(@NonNull DatabaseError databaseError) { }
             });
     }
 
@@ -94,7 +82,7 @@ public class MainActivity extends AppCompatActivity {
         tabLayout.setupWithViewPager(viewPager);
         myViewPagerAdapter=new MyViewPagerAdapter(getSupportFragmentManager());
         viewPager.setAdapter(myViewPagerAdapter);
-
+        firebaseUser=firebaseAuth.getCurrentUser();
         Intent notificationIntent = new Intent(this,MainActivity.class);
         PendingIntent contentIntent = PendingIntent.getActivity(this, 0, notificationIntent, PendingIntent.FLAG_CANCEL_CURRENT);
         notificationManager = (NotificationManager)getSystemService(Context.NOTIFICATION_SERVICE);
@@ -113,10 +101,6 @@ public class MainActivity extends AppCompatActivity {
         firebaseUser=firebaseAuth.getCurrentUser();
         if(firebaseUser==null)
             startActivity(new Intent(this,LoginActivity.class));
-        else{
-            databaseReference= FirebaseDatabase.getInstance().getReference("notifications").child(firebaseUser.getUid());
-            notification();
-        }
     }
 
     @Override

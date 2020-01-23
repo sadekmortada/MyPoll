@@ -64,11 +64,7 @@ public class OwnerActivity extends AppCompatActivity {
         pollTitle.setText(CurrentFragment.arrayList.get(position).getTitle());
         databaseReference= FirebaseDatabase.getInstance().getReference("polls").child(key).child("options");
         voters=new ArrayList<>();
-//        Toast.makeText(this,""+position,Toast.LENGTH_SHORT).show();
-//        if(CurrentFragment.urls.get(position)!=null){ //initialize the circleimage
-//            while(CurrentFragment.arrayList.get(position).getBitmap()==null);
-//            circleImageView.setImageBitmap(CurrentFragment.arrayList.get(position).getBitmap());
-//        }
+
     }
 
     public void fillOptions(){

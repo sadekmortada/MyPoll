@@ -187,7 +187,8 @@ public class CreatePollActivity extends AppCompatActivity {
         info.put("type",spinner.getSelectedItem().toString());
         final Intent intent=new Intent(this,OwnerActivity.class);
         intent.putExtra("key",pollKey);
-        intent.putExtra("position",CurrentFragment.keys.size());
+        final int pos=CurrentFragment.keys.size();
+        intent.putExtra("position",pos);
         if(uri!=null) { //uploading image and its url
             storageReference.putFile(uri).continueWithTask(new Continuation<UploadTask.TaskSnapshot, Task<Uri>>() {
                 @Override

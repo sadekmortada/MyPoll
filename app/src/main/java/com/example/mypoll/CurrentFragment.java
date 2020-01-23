@@ -55,7 +55,7 @@ import java.util.concurrent.ExecutionException;
 public class CurrentFragment extends Fragment {
     private PollAdapter pollAdapter;
     public static ArrayList<PollView> arrayList;
-    public static ArrayList<String> keys,options,urls;
+    public static ArrayList<String> keys,options,urls,types;
     private ListView listView;
     private DatabaseReference databaseReference;
     private StorageReference storageReference;
@@ -100,6 +100,7 @@ public class CurrentFragment extends Fragment {
         keys=new ArrayList<>();
         options=new ArrayList<>();
         urls=new ArrayList<>();
+        types=new ArrayList<>();
     }
 
     public void initialize(){
@@ -136,11 +137,13 @@ public class CurrentFragment extends Fragment {
                         else
                             urls.add(null);
                         pos++;
+                        types.add(dataSnapshot.child("type").getValue().toString());
                         Iterator iterator=dataSnapshot.child("options").getChildren().iterator();
                         String string="";
                         while(iterator.hasNext())
                             string+=((DataSnapshot)iterator.next()).getKey().toString()+"%#&";
                         options.add(string);
+
                     }
                     @Override
                     public void onCancelled(@NonNull DatabaseError databaseError) {
@@ -199,6 +202,7 @@ public class CurrentFragment extends Fragment {
             keys.clear();
             options.clear();
             urls.clear();
+            types.clear();
             pollAdapter.notifyDataSetChanged();
             initialize();
             fillArray();
