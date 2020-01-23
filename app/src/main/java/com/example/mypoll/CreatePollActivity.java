@@ -187,7 +187,7 @@ public class CreatePollActivity extends AppCompatActivity {
         info.put("type",spinner.getSelectedItem().toString());
         final Intent intent=new Intent(this,OwnerActivity.class);
         intent.putExtra("key",pollKey);
-        intent.putExtra("position",CurrentFragment.arrayList.size());
+        intent.putExtra("position",CurrentFragment.keys.size());
         if(uri!=null) { //uploading image and its url
             storageReference.putFile(uri).continueWithTask(new Continuation<UploadTask.TaskSnapshot, Task<Uri>>() {
                 @Override
@@ -209,9 +209,9 @@ public class CreatePollActivity extends AppCompatActivity {
                                     @Override
                                     public void onComplete(@NonNull Task<Void> task) {
                                         progressDialog.dismiss();
-                                        finish();
-                                        Toast.makeText(getApplicationContext(), "Published !", Toast.LENGTH_SHORT).show();
                                         startActivity(intent);
+                                        Toast.makeText(getApplicationContext(), "Published !", Toast.LENGTH_SHORT).show();
+                                        finish();
                                     }
                                 });
                             }
@@ -229,9 +229,9 @@ public class CreatePollActivity extends AppCompatActivity {
                         @Override
                         public void onComplete(@NonNull Task<Void> task) {
                             progressDialog.dismiss();
-                            finish();
-                            Toast.makeText(getApplicationContext(),"Published !",Toast.LENGTH_SHORT).show();
                             startActivity(intent);
+                            Toast.makeText(getApplicationContext(), "Published !", Toast.LENGTH_SHORT).show();
+                            finish();
                         }
                     });
                 }

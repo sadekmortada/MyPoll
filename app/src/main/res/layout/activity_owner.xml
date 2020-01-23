@@ -72,23 +72,87 @@
         app:layout_constraintStart_toEndOf="@+id/poll_key"
         android:background="?attr/actionModeCopyDrawable"/>
     </LinearLayout>
+
+
+    <TextView
+        android:id="@+id/votings_text"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Votings"
+        android:textSize="20sp"
+        android:layout_marginEnd="5dp"
+        app:layout_constraintTop_toBottomOf="@+id/owner_poll_image"
+        app:layout_constraintStart_toStartOf="parent"
+        android:layout_marginTop="30dp"
+        android:textColor="@color/colorPrimaryDark"/>
     <HorizontalScrollView
+        android:id="@+id/votings_scroll"
         android:layout_width="match_parent"
-        android:layout_height="200dp"
+        android:layout_height="wrap_content"
         app:layout_constraintEnd_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/owner_poll_image"
-        android:layout_marginTop="25dp"
+        app:layout_constraintTop_toBottomOf="@id/votings_text"
         android:background="@drawable/blueframe"
-        android:padding="10dp">
+        android:padding="15dp">
         <LinearLayout
             android:id="@+id/options_layout"
             android:layout_width="wrap_content"
             android:layout_height="match_parent"
-            android:orientation="horizontal">
-
-
-        </LinearLayout>
+            android:orientation="horizontal"
+            android:background="@android:color/holo_blue_bright"/>
     </HorizontalScrollView>
+
+    <TextView
+        android:id="@+id/comments_text"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Comments"
+        android:textSize="20sp"
+        android:layout_marginEnd="5dp"
+        app:layout_constraintTop_toBottomOf="@+id/votings_scroll"
+        app:layout_constraintStart_toStartOf="parent"
+        android:layout_marginTop="20dp"
+        android:textColor="@color/colorPrimaryDark"/>
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="200dp"
+        app:layout_constraintEnd_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/comments_text"
+        android:orientation="vertical"
+        android:background="@drawable/blueframe"
+        android:padding="10dp">
+    <androidx.core.widget.NestedScrollView
+        android:id="@+id/comments_scroll"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        >
+        <LinearLayout
+            android:id="@+id/comments_layout"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:orientation="vertical"/>
+    </androidx.core.widget.NestedScrollView>
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:id="@+id/groupChatLinear"
+            android:orientation="horizontal">
+            <EditText
+                android:id="@+id/groupMessage"
+                android:layout_width="0dp"
+                android:layout_weight="1"
+                android:layout_height="wrap_content"
+                android:hint="Type A Message"
+                android:textColor="@color/colorPrimaryDark"
+                android:inputType="textMultiLine"/>
+            <ImageButton
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:background="@drawable/send_message"
+                 />
+        </LinearLayout>
+    </LinearLayout>
 
 </androidx.constraintlayout.widget.ConstraintLayout>

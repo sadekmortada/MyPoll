@@ -55,14 +55,14 @@ import java.util.concurrent.ExecutionException;
 public class CurrentFragment extends Fragment {
     private PollAdapter pollAdapter;
     public static ArrayList<PollView> arrayList;
-    public static ArrayList<String> keys;
-    public static ArrayList<String> options;
+    public static ArrayList<String> keys,options,urls;
     private ListView listView;
     private DatabaseReference databaseReference;
     private StorageReference storageReference;
     private FirebaseAuth firebaseAuth;
     private FirebaseUser firebaseUser;
     private String title, owner, date,time;
+    private int pos=0;
     private static boolean reset=false;
 
     @SuppressLint("ResourceAsColor")
@@ -71,9 +71,7 @@ public class CurrentFragment extends Fragment {
         // Inflate the layout for this fragment
         View view = inflater.inflate(R.layout.fragment_current, container, false);
         getActivity().getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_HIDDEN);
-//        ConnectivityManager connectivityManager = (ConnectivityManager) getActivity().getSystemService(Context.CONNECTIVITY_SERVICE);
-//        if (!(connectivityManager.getNetworkInfo(ConnectivityManager.TYPE_MOBILE).getState() == NetworkInfo.State.CONNECTED ||
-//                connectivityManager.getNetworkInfo(ConnectivityManager.TYPE_WIFI).getState() == NetworkInfo.State.CONNECTED)) { return noConnectionView(); }
+
         initialize(view);
         initialize();
         if(firebaseUser!=null)
@@ -101,6 +99,7 @@ public class CurrentFragment extends Fragment {
         listView.setAdapter(pollAdapter);
         keys=new ArrayList<>();
         options=new ArrayList<>();
+        urls=new ArrayList<>();
     }
 
     public void initialize(){
@@ -129,10 +128,14 @@ public class CurrentFragment extends Fragment {
                         if (dataSnapshot.child("owner_id").getValue().toString().equals(firebaseUser.getUid()))
                             owner = "by you";
                         Object url = dataSnapshot.child("image_url").getValue();
-                        if ( url!= null)
-                            new ImageDownloader().execute(url.toString(), title, owner, date, time);
+                        arrayList.add(new PollView(null,  title, owner, date+"\n"+ time));
+                        if ( url!= null) {
+                            urls.add(url.toString());
+                            new ImageDownloader().execute(url.toString(), "" + pos);
+                        }
                         else
-                            new ImageDownloader().execute(null, title, owner, date, time);
+                            urls.add(null);
+                        pos++;
                         Iterator iterator=dataSnapshot.child("options").getChildren().iterator();
                         String string="";
                         while(iterator.hasNext())
@@ -162,46 +165,28 @@ public class CurrentFragment extends Fragment {
             }
         });
     }
-
-//    private View noConnectionView() {
-//        LinearLayout linearLayout = new LinearLayout(getContext());
-//        ImageView imageView = new ImageView(getContext());
-//        try {
-//            imageView.setBackground(Drawable.createFromStream(getActivity().getAssets().open("nowifibig.png"), null));
-//        } catch (IOException e) {
-//            e.printStackTrace();
-//        }
-//        imageView.setMinimumHeight(600);
-//        imageView.setMinimumWidth(600);
-//        linearLayout.addView(imageView);
-//        linearLayout.setGravity(Gravity.CENTER);
-//        return linearLayout;
-//    }
-
     public class ImageDownloader extends AsyncTask<String,Void, Bitmap> {
-        private String s1,s2,s3;
+        int i;
         @Override
         protected Bitmap doInBackground(String... strings) {
-            s1=strings[1];
-            s2=strings[2];
-            s3=strings[3]+"\n"+strings[4];
+            i=Integer.parseInt(strings[1]);
             String string=strings[0];
             if(string!=null){
-            try{
-                URL url=new URL(string);
-                HttpURLConnection urlConnection=(HttpURLConnection) url.openConnection();
-                InputStream inputStream=urlConnection.getInputStream();
-                return (BitmapFactory.decodeStream(inputStream));
-            }catch (Exception e) {
-                return null;
-            }
+                try{
+                    URL url=new URL(string);
+                    HttpURLConnection urlConnection=(HttpURLConnection) url.openConnection();
+                    InputStream inputStream=urlConnection.getInputStream();
+                    return (BitmapFactory.decodeStream(inputStream));
+                }catch (Exception e) {
+                    return null;
+                }
             }
             return null;
         }
         @Override
         protected void onPostExecute(Bitmap bitmap) {
             super.onPostExecute(bitmap);
-            arrayList.add(new PollView(bitmap, s1, s2, s3));
+            arrayList.get(i).setBitmap(bitmap);
             pollAdapter.notifyDataSetChanged();
         }
     }
@@ -213,6 +198,7 @@ public class CurrentFragment extends Fragment {
             arrayList.clear();
             keys.clear();
             options.clear();
+            urls.clear();
             pollAdapter.notifyDataSetChanged();
             initialize();
             fillArray();
@@ -223,4 +209,5 @@ public class CurrentFragment extends Fragment {
     public static void reset(){
         reset=true;
     }
+
 }

@@ -6,5 +6,8 @@
     android:layout_height="match_parent"
     tools:context=".ParticipantActivity"
     android:background="@drawable/mypollbg">
-
+<Button
+    android:id="@+id/button"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"/>
 </androidx.constraintlayout.widget.ConstraintLayout>

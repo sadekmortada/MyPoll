@@ -12,6 +12,7 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.text.SpannableString;
 import android.text.style.UnderlineSpan;
+import android.view.Gravity;
 import android.view.View;
 import android.view.WindowManager;
 import android.widget.ArrayAdapter;
@@ -32,7 +33,10 @@ import org.w3c.dom.Text;
 import java.util.ArrayList;
 import java.util.Iterator;
 
+import de.hdodenhof.circleimageview.CircleImageView;
+
 public class OwnerActivity extends AppCompatActivity {
+    public static CircleImageView circleImageView;
     private String key;
     private TextView pollKey,pollTitle;
     private DatabaseReference databaseReference;
@@ -49,21 +53,27 @@ public class OwnerActivity extends AppCompatActivity {
     }
 
     public void initialize(){
+        circleImageView=findViewById(R.id.owner_poll_image);
+        optionsLayout=findViewById(R.id.options_layout);
+        pollTitle=findViewById(R.id.owner_poll_title);
+        pollKey=findViewById(R.id.poll_key);
         Intent intent=getIntent();
         position=intent.getIntExtra("position",0);
-        pollTitle=findViewById(R.id.owner_poll_title);
         key=intent.getStringExtra("key");
-        pollKey=findViewById(R.id.poll_key);
         pollKey.setText(key);
         pollTitle.setText(CurrentFragment.arrayList.get(position).getTitle());
         databaseReference= FirebaseDatabase.getInstance().getReference("polls").child(key).child("options");
-        optionsLayout=findViewById(R.id.options_layout);
         voters=new ArrayList<>();
+//        Toast.makeText(this,""+position,Toast.LENGTH_SHORT).show();
+//        if(CurrentFragment.urls.get(position)!=null){ //initialize the circleimage
+//            while(CurrentFragment.arrayList.get(position).getBitmap()==null);
+//            circleImageView.setImageBitmap(CurrentFragment.arrayList.get(position).getBitmap());
+//        }
     }
 
     public void fillOptions(){
         String[] options=CurrentFragment.options.get(position).split("%#&");
-        for(int i=0;i<options.length-1;i++) {
+        for(int i=0;i<options.length;i++) {
             voters.add(new ArrayList<String>());
             final LinearLayout linearLayout=new LinearLayout(this);
             linearLayout.setOrientation(LinearLayout.VERTICAL);
@@ -99,8 +109,8 @@ public class OwnerActivity extends AppCompatActivity {
             votes.setTextColor(getResources().getColor(R.color.colorPrimaryDark));
             SpannableString spannableString=new SpannableString("view voters");
             spannableString.setSpan(new UnderlineSpan(),0,spannableString.length(),0);
-            votes.setText(spannableString);
-            votes.setOnClickListener(new View.OnClickListener() {
+            viewNames.setText(spannableString);
+            viewNames.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
                     viewVoters(index);
@@ -109,6 +119,9 @@ public class OwnerActivity extends AppCompatActivity {
             linearLayout.addView(option);
             linearLayout.addView(votes);
             linearLayout.addView(viewNames);
+            votes.setPadding(0,20,0,20);
+            linearLayout.setPadding(70,20,30,20);
+            linearLayout.setBackground(getResources().getDrawable(R.drawable.blueframe));
             optionsLayout.addView(linearLayout);
         }
     }
@@ -126,4 +139,6 @@ public class OwnerActivity extends AppCompatActivity {
         clipboard.setPrimaryClip(clip);
         Toast.makeText(this,"Copied to clipboard",Toast.LENGTH_SHORT).show();
     }
+
+
 }
