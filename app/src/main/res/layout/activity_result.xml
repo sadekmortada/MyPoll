@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context=".ResultActivity"
+    android:background="@drawable/mypollbg">
+
+<!--    <androidx.appcompat.widget.Toolbar-->
+<!--        android:layout_width="match_parent"-->
+<!--        android:id="@+id/results_toolbar"-->
+<!--        app:layout_constraintTop_toTopOf="parent"-->
+<!--        app:layout_constraintLeft_toLeftOf="parent"-->
+<!--        app:layout_constraintRight_toRightOf="parent"-->
+<!--        android:layout_height="wrap_content"-->
+<!--        android:theme="@style/ThemeOverlay.AppCompat.Dark.ActionBar"-->
+<!--        android:background="@color/colorPrimary"-->
+<!--        app:titleTextColor="@color/colorWhite"-->
+<!--        app:title="Results"/>-->
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:id="@+id/result_poll_title"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        android:textSize="20sp"
+        android:layout_marginTop="20dp"
+        android:textColor="@color/colorPrimaryDark"
+        android:layout_marginBottom="10dp" />
+
+
+    <de.hdodenhof.circleimageview.CircleImageView
+        android:id="@+id/result_poll_image"
+        android:layout_width="110dp"
+        android:layout_height="110dp"
+        android:src="@drawable/pollbg"
+        app:civ_border_color="@color/colorPrimary"
+        app:civ_border_width="5dp"
+        android:layout_marginTop="5dp"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/result_poll_title" />
+
+
+    <TextView
+        android:id="@+id/results_text"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Results"
+        android:textSize="20sp"
+        android:layout_marginStart="20dp"
+        android:layout_marginEnd="5dp"
+        app:layout_constraintTop_toBottomOf="@+id/result_poll_image"
+        app:layout_constraintStart_toStartOf="parent"
+        android:layout_marginTop="30dp"
+        android:textColor="@color/colorPrimaryDark"/>
+    <HorizontalScrollView
+        android:id="@+id/results_scroll"
+        android:layout_width="match_parent"
+        android:layout_height="180dp"
+        app:layout_constraintEnd_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/results_text"
+        android:background="@drawable/blueframe"
+        android:padding="15dp"
+        android:layout_marginStart="20dp"
+        android:layout_marginEnd="20dp">
+        <LinearLayout
+            android:id="@+id/results_layout"
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:orientation="horizontal"
+            android:background="@android:color/holo_blue_bright"/>
+    </HorizontalScrollView>
+
+</androidx.constraintlayout.widget.ConstraintLayout>

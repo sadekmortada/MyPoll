@@ -15,10 +15,14 @@ import android.os.Bundle;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.appcompat.widget.SearchView;
 import androidx.fragment.app.Fragment;
 
 import android.view.Gravity;
 import android.view.LayoutInflater;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.WindowManager;
@@ -53,16 +57,15 @@ import java.util.concurrent.ExecutionException;
  * A simple {@link Fragment} subclass.
  */
 public class CurrentFragment extends Fragment {
-    private PollAdapter pollAdapter;
+    public static PollAdapter pollAdapter;
     public static ArrayList<PollView> arrayList;
     public static ArrayList<String> keys,options,urls,types;
     private ListView listView;
     private DatabaseReference databaseReference;
-    private StorageReference storageReference;
     private FirebaseAuth firebaseAuth;
     private FirebaseUser firebaseUser;
     private String title, owner, date,time;
-    private int pos=0;
+    public static int pos=0,historyPos=0;
     private static boolean reset=false;
 
     @SuppressLint("ResourceAsColor")
@@ -72,6 +75,7 @@ public class CurrentFragment extends Fragment {
         View view = inflater.inflate(R.layout.fragment_current, container, false);
         getActivity().getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_HIDDEN);
 
+        setHasOptionsMenu(true);
         initialize(view);
         initialize();
         if(firebaseUser!=null)
@@ -101,6 +105,11 @@ public class CurrentFragment extends Fragment {
         options=new ArrayList<>();
         urls=new ArrayList<>();
         types=new ArrayList<>();
+        HistoryFragment.arrayList=new ArrayList<>();
+        HistoryFragment.options=new ArrayList<>();
+        HistoryFragment.urls=new ArrayList<>();
+        HistoryFragment.keys=new ArrayList<>();
+        HistoryFragment.pollAdapter=new PollAdapter(getContext(),HistoryFragment.arrayList);
     }
 
     public void initialize(){
@@ -108,15 +117,13 @@ public class CurrentFragment extends Fragment {
         firebaseUser = firebaseAuth.getCurrentUser();
         if(firebaseUser!=null)
             databaseReference = FirebaseDatabase.getInstance().getReference("users").child(firebaseUser.getUid()).child("polls");
-        storageReference = FirebaseStorage.getInstance().getReference("polls");
     }
 
     public void fillArray() {
         databaseReference.addChildEventListener(new ChildEventListener() {
             @Override
             public void onChildAdded(@NonNull DataSnapshot dataSnapshot, @Nullable String s) {
-                String pollKey=dataSnapshot.getKey();
-                keys.add(pollKey);
+                final String pollKey=dataSnapshot.getKey();
                 DatabaseReference dbr = FirebaseDatabase.getInstance().getReference("polls").child(pollKey);
                 dbr.addListenerForSingleValueEvent(new ValueEventListener() {
                     @Override
@@ -125,25 +132,44 @@ public class CurrentFragment extends Fragment {
                         title = dataSnapshot.child("title").getValue().toString();
                         date = dataSnapshot.child("date").getValue().toString();
                         time = dataSnapshot.child("time").getValue().toString();
-                        owner = "by \"" + owner + "\"";
                         if (dataSnapshot.child("owner_id").getValue().toString().equals(firebaseUser.getUid()))
                             owner = "by you";
-                        Object url = dataSnapshot.child("image_url").getValue();
-                        arrayList.add(new PollView(null,  title, owner, date+"\n"+ time));
-                        if ( url!= null) {
-                            urls.add(url.toString());
-                            new ImageDownloader().execute(url.toString(), "" + pos);
-                        }
                         else
-                            urls.add(null);
-                        pos++;
-                        types.add(dataSnapshot.child("type").getValue().toString());
+                            owner = "by \"" + owner + "\"";
+                        Object url = dataSnapshot.child("image_url").getValue();
+                        if(dataSnapshot.child("state").getValue().toString().equals("opened")) {
+                            arrayList.add(new PollView(null, title, owner, date + "\n" + time));
+                            if (url != null) {
+                                urls.add(url.toString());
+                                new ImageDownloader().execute(url.toString(), "" + pos);
+                            } else
+                                urls.add(null);
+                            pos++;
+                            types.add(dataSnapshot.child("type").getValue().toString());
+                            keys.add(pollKey);
+                        }
+                        else{
+                            HistoryFragment.arrayList.add(new PollView(null, title, owner, date + "\n" + time));
+                            if (url != null) {
+                                HistoryFragment.urls.add(url.toString());
+                                new HistoryImageDownloader().execute(url.toString(), "" + historyPos);
+                            } else
+                                HistoryFragment.urls.add(null);
+                            historyPos++;
+                            HistoryFragment.keys.add(pollKey);
+                        }
                         Iterator iterator=dataSnapshot.child("options").getChildren().iterator();
                         String string="";
                         while(iterator.hasNext())
-                            string+=((DataSnapshot)iterator.next()).getKey().toString()+"%#&";
-                        options.add(string);
-
+                            string+=((DataSnapshot)iterator.next()).getValue().toString()+"%#&";
+                        if(dataSnapshot.child("state").getValue().toString().equals("opened")) {
+                            options.add(string);
+                            pollAdapter.notifyDataSetChanged();
+                        }
+                        else{
+                            HistoryFragment.options.add(string);
+                            HistoryFragment.pollAdapter.notifyDataSetChanged();
+                        }
                     }
                     @Override
                     public void onCancelled(@NonNull DatabaseError databaseError) {
@@ -151,23 +177,16 @@ public class CurrentFragment extends Fragment {
                 });
             }
             @Override
-            public void onChildChanged(@NonNull DataSnapshot dataSnapshot, @Nullable String s) {
-
-            }
+            public void onChildChanged(@NonNull DataSnapshot dataSnapshot, @Nullable String s) { }
             @Override
-            public void onChildRemoved(@NonNull DataSnapshot dataSnapshot) {
-
-            }
+            public void onChildRemoved(@NonNull DataSnapshot dataSnapshot) { }
             @Override
-            public void onChildMoved(@NonNull DataSnapshot dataSnapshot, @Nullable String s) {
-
-            }
+            public void onChildMoved(@NonNull DataSnapshot dataSnapshot, @Nullable String s) { }
             @Override
-            public void onCancelled(@NonNull DatabaseError databaseError) {
-
-            }
+            public void onCancelled(@NonNull DatabaseError databaseError) { }
         });
     }
+
     public class ImageDownloader extends AsyncTask<String,Void, Bitmap> {
         int i;
         @Override
@@ -180,9 +199,7 @@ public class CurrentFragment extends Fragment {
                     HttpURLConnection urlConnection=(HttpURLConnection) url.openConnection();
                     InputStream inputStream=urlConnection.getInputStream();
                     return (BitmapFactory.decodeStream(inputStream));
-                }catch (Exception e) {
-                    return null;
-                }
+                }catch (Exception e) { }
             }
             return null;
         }
@@ -194,10 +211,41 @@ public class CurrentFragment extends Fragment {
         }
     }
 
+    public class HistoryImageDownloader extends AsyncTask<String,Void, Bitmap> {
+        int i;
+        @Override
+        protected Bitmap doInBackground(String... strings) {
+            i=Integer.parseInt(strings[1]);
+            String string=strings[0];
+            if(string!=null){
+                try{
+                    URL url=new URL(string);
+                    HttpURLConnection urlConnection=(HttpURLConnection) url.openConnection();
+                    InputStream inputStream=urlConnection.getInputStream();
+                    return (BitmapFactory.decodeStream(inputStream));
+                }catch (Exception e) { }
+            }
+            return null;
+        }
+        @Override
+        protected void onPostExecute(Bitmap bitmap) {
+            super.onPostExecute(bitmap);
+            HistoryFragment.arrayList.get(i).setBitmap(bitmap);
+            HistoryFragment.pollAdapter.notifyDataSetChanged();
+        }
+    }
+
     @Override
     public void onResume() {
         super.onResume();
         if(reset){
+            historyPos=0;
+            HistoryFragment.arrayList.clear();
+            HistoryFragment.keys.clear();
+            HistoryFragment.options.clear();
+            HistoryFragment.urls.clear();
+            HistoryFragment.pollAdapter.notifyDataSetChanged();
+            pos=0;
             arrayList.clear();
             keys.clear();
             options.clear();
@@ -214,4 +262,20 @@ public class CurrentFragment extends Fragment {
         reset=true;
     }
 
+    @Override
+    public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
+        inflater.inflate(R.menu.current_menu,menu);
+//        MenuItem menuItem=menu.findItem(R.id.current_search);
+//        SearchView searchView=(SearchView) menuItem.getActionView();
+//        searchView.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
+//            @Override
+//            public boolean onQueryTextSubmit(String query) {
+//                return false; }
+//            @Override
+//            public boolean onQueryTextChange(String newText) {
+//                Toast.makeText(getContext(),"new",Toast.LENGTH_SHORT).show();
+//                return false;
+//            }
+//        });
+    }
 }

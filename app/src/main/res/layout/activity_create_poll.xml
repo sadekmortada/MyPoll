@@ -172,13 +172,14 @@
                 android:layout_height="wrap_content"
                 android:orientation="horizontal">
                 <EditText
+                    android:id="@+id/edit_1"
                     android:layout_width="0dp"
                     android:layout_weight="1"
                     android:layout_height="wrap_content"
                     android:hint="option 1"
                     android:inputType="text"
                     android:lines="1"
-                    android:maxLength="25"
+                    android:maxLength="15"
                     android:maxLines="1"
                     android:textColor="@color/colorPrimaryDark" />
                 <ImageButton
@@ -194,13 +195,13 @@
                 android:layout_height="wrap_content"
                 android:orientation="horizontal">
                 <EditText
+                    android:id="@+id/edit_2"
                     android:layout_width="0dp"
                     android:layout_weight="1"
                     android:layout_height="wrap_content"
                     android:hint="option 2"
                     android:inputType="text"
                     android:lines="1"
-                    android:maxLength="25"
                     android:maxLines="1"
                     android:textColor="@color/colorPrimaryDark" />
                 <ImageButton

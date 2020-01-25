@@ -19,6 +19,8 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.Toast;
 
+import com.google.android.gms.tasks.OnCompleteListener;
+import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.DataSnapshot;
@@ -50,6 +52,7 @@ public class CreateJoinFragment extends Fragment {
                              Bundle savedInstanceState) {
         // Inflate the layout for this fragment
         View view=inflater.inflate(R.layout.fragment_create_join, container, false);
+
         initialize(view);
         create.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -84,9 +87,9 @@ public class CreateJoinFragment extends Fragment {
                                     String ownerId=ds.child("owner_id").getValue().toString();
                                     if(!firebaseUser.getUid().equals(ds.child("owner_id").getValue().toString())) {
                                         if(ds.child("state").getValue().equals("opened")) {
-                                            Intent intent=new Intent(getContext(),ParticipantActivity.class);
+                                            final Intent intent=new Intent(getContext(),ParticipantActivity.class);
                                             intent.putExtra("key",key);
-                                            intent.putExtra("position",CurrentFragment.keys.size());
+                                            intent.putExtra("position",CurrentFragment.pos);
                                             boolean flag=false;
                                             for(int i=0;i<CurrentFragment.keys.size();i++){
                                                 if(key.equals(CurrentFragment.keys.get(i))){
@@ -97,14 +100,19 @@ public class CreateJoinFragment extends Fragment {
                                             }
                                             if(!flag) {
                                                 databaseReference.child("users").child(firebaseUser.getUid()).child("polls").child(key).setValue("");
+                                                databaseReference.child("polls").child(key).child("participants").child(firebaseUser.getUid()).setValue("");
                                                 HashMap<String,Object> hashMap=new HashMap<>();
-                                                hashMap.put("from",firebaseUser.getUid());
                                                 hashMap.put("title","\""+sharedPreferences.getString("user_name","")+"\" joined your poll \""+ds.child("title").getValue().toString()+"\"");
-                                                hashMap.put("body","Please Check Out");
-                                                databaseReference.child("notifications").child(ownerId).push().updateChildren(hashMap);
+                                                hashMap.put("body","Check out");
+                                                hashMap.put("type","join");
+                                                databaseReference.child("notifications").child(ownerId).push().setValue(hashMap).addOnCompleteListener(new OnCompleteListener<Void>() {
+                                                    @Override
+                                                    public void onComplete(@NonNull Task<Void> task) {
+                                                        if(task.isSuccessful())
+                                                            startActivity(intent);
+                                                    }
+                                                });
                                             }
-                                            startActivity(intent);
-                                            editText1.setText("");
                                         }
                                         else
                                             Toast.makeText(getContext(),"This poll is closed",Toast.LENGTH_SHORT).show();
@@ -121,6 +129,7 @@ public class CreateJoinFragment extends Fragment {
                         public void onCancelled(@NonNull DatabaseError databaseError) {
                         }
                     });
+                    editText1.setText("");
                 }
                 else
                     Toast.makeText(getContext(),"Key can't be empty",Toast.LENGTH_SHORT).show();

@@ -47,14 +47,7 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toBottomOf="@id/choices_text"
         android:background="@drawable/blueframe"
-        android:padding="15dp">
-        <LinearLayout
-            android:id="@+id/choices_layout"
-            android:layout_width="wrap_content"
-            android:layout_height="match_parent"
-            android:orientation="horizontal"
-            android:background="@android:color/holo_blue_bright"/>
-    </HorizontalScrollView>
+        android:padding="15dp"/>
 
     <TextView
         android:id="@+id/participants_comments_text"

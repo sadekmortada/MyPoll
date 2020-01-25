@@ -98,7 +98,6 @@ public class LoginActivity extends AppCompatActivity {
                 progressDialog.dismiss();
                 if(task.isSuccessful()) {
                     FirebaseUser firebaseUser=firebaseAuth.getCurrentUser();
-                    MainActivity.notification(); //set the foreground listener for notifications
                     CurrentFragment.reset();
                     FirebaseDatabase.getInstance().getReference("users").child(firebaseUser.getUid()).child("phone_token").setValue(FirebaseInstanceId.getInstance().getToken());
                     FirebaseDatabase.getInstance().getReference("users").child(firebaseUser.getUid()).child("name").addListenerForSingleValueEvent(new ValueEventListener() {

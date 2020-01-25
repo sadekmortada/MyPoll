@@ -14,7 +14,11 @@ import android.graphics.drawable.GradientDrawable;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
+import android.text.Editable;
+import android.text.InputFilter;
 import android.text.InputType;
+import android.text.Spanned;
+import android.text.TextWatcher;
 import android.text.format.Time;
 import android.view.Gravity;
 import android.view.View;
@@ -70,6 +74,8 @@ public class CreatePollActivity extends AppCompatActivity {
     private HashMap<String,Object> info;
     private SharedPreferences sharedPreferences;
     private NestedScrollView nestedScrollView;
+    private String filtered=".$[]#\\/";
+    private InputFilter[] inputFilters;
     private int i=2;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -99,6 +105,14 @@ public class CreatePollActivity extends AppCompatActivity {
         progressDialog.setMessage("Please wait...");
         progressDialog.setCancelable(false);
         sharedPreferences=getSharedPreferences("user",MODE_PRIVATE);
+        inputFilters=new InputFilter[]{new InputFilter() {
+            @Override
+            public CharSequence filter(CharSequence source, int start, int end, Spanned dest, int dstart, int dend) {
+                if (source != null && filtered.contains("" + source))
+                    return "";
+                return null; }},new InputFilter.LengthFilter(17)};
+        ((EditText)findViewById(R.id.edit_1)).setFilters(inputFilters);
+        ((EditText)findViewById(R.id.edit_2)).setFilters(inputFilters);
     }
 
     public void addOption(View view) {
@@ -121,6 +135,7 @@ public class CreatePollActivity extends AppCompatActivity {
         editText.setWidth((((LinearLayout)linearLayout.getChildAt(0)).getChildAt(0)).getWidth());
         editText.setInputType(InputType.TYPE_CLASS_TEXT);
         editText.setTextColor(getResources().getColor(R.color.colorPrimaryDark));
+        editText.setFilters(inputFilters);
         Toast.makeText(this,"Option added",Toast.LENGTH_SHORT).show();
     }
 
@@ -170,7 +185,7 @@ public class CreatePollActivity extends AppCompatActivity {
                 return;
             }
             else
-                options.put(option, "");
+                options.put(""+i, option);
         }
         Calendar calendar=Calendar.getInstance(TimeZone.getTimeZone(Time.getCurrentTimezone()));
         SimpleDateFormat simpleDateFormat=new SimpleDateFormat("dd MMM, yyyy");
@@ -187,8 +202,7 @@ public class CreatePollActivity extends AppCompatActivity {
         info.put("type",spinner.getSelectedItem().toString());
         final Intent intent=new Intent(this,OwnerActivity.class);
         intent.putExtra("key",pollKey);
-        final int pos=CurrentFragment.keys.size();
-        intent.putExtra("position",pos);
+        intent.putExtra("position",CurrentFragment.pos);
         if(uri!=null) { //uploading image and its url
             storageReference.putFile(uri).continueWithTask(new Continuation<UploadTask.TaskSnapshot, Task<Uri>>() {
                 @Override
@@ -289,9 +303,9 @@ public class CreatePollActivity extends AppCompatActivity {
 
     public TableLayout myCalendar(final String month, int nbdays, int day, boolean sameMonth, final EditText view, final int y){
         TableLayout tableLayout=new TableLayout(this);
-        tableLayout.setBackground(getResources().getDrawable(R.drawable.blueframe));
+        tableLayout.setBackground(getResources().getDrawable(R.drawable.smallwoodenframe));
         tableLayout.setLayoutParams(new LinearLayout.LayoutParams(LinearLayout.LayoutParams.WRAP_CONTENT,LinearLayout.LayoutParams.MATCH_PARENT));
-        tableLayout.setPadding(30,30,30,30);
+        tableLayout.setPadding(50,70,100,70);
         TableRow monthRow=new TableRow(this);
         TextView monthTextView=new TextView(this);
         monthRow.setLayoutParams(new TableLayout.LayoutParams(TableLayout.LayoutParams.WRAP_CONTENT, TableLayout.LayoutParams.WRAP_CONTENT));
@@ -341,7 +355,7 @@ public class CreatePollActivity extends AppCompatActivity {
     }
 
     public void chooseDate(View view,EditText editText,int d,String month,int y,LinearLayout linearLayout){
-        editText.setText(d+"/"+month+"/"+y);
+        editText.setText(d+" "+month+", "+y);
         if(d==-1)
             editText.setText("Today");
         for(int i=0;i<3;i++)
