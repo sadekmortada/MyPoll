@@ -20,6 +20,7 @@
             android:layout_height="wrap_content"
             android:id="@+id/main_toolbar"
             app:title="MyPoll"
+
             android:theme="@style/ThemeOverlay.AppCompat.Dark.ActionBar"
             app:popupTheme="@style/Theme.AppCompat.Light"
             android:background="@color/colorPrimary"

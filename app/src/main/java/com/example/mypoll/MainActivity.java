@@ -5,9 +5,9 @@ import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 
 import androidx.appcompat.widget.Toolbar;
-import androidx.core.view.MenuItemCompat;
 import androidx.viewpager.widget.ViewPager;
 
+import android.app.AlertDialog;
 import android.app.Notification;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
@@ -19,8 +19,8 @@ import android.graphics.BitmapFactory;
 import android.os.Bundle;
 import android.view.Menu;
 import android.view.MenuItem;
-import android.widget.SearchView;
-import android.widget.Toast;
+import android.widget.EditText;
+import android.widget.TextView;
 
 import com.google.android.material.tabs.TabLayout;
 import com.google.firebase.auth.FirebaseAuth;
@@ -40,7 +40,7 @@ public class MainActivity extends AppCompatActivity {
     private MyViewPagerAdapter myViewPagerAdapter;
     private DatabaseReference databaseReference;
     private SharedPreferences sharedPreferences;
-    private boolean reset=true;
+    public boolean reset=true;
     private static Notification.Builder builder;
     private static Notification notification;
     private static NotificationManager notificationManager;
@@ -113,14 +113,26 @@ public class MainActivity extends AppCompatActivity {
     }
 
     @Override
-    public boolean onCreateOptionsMenu(Menu menu) {
+    public boolean onCreateOptionsMenu( Menu menu) {
         getMenuInflater().inflate(R.menu.main_menu,menu);
-        return true;
+        return super.onCreateOptionsMenu(menu);
     }
     @Override
     public boolean onOptionsItemSelected(@NonNull MenuItem item) {
         switch (item.getItemId()){
             case R.id.help:
+                AlertDialog.Builder builder=new AlertDialog.Builder(this);
+                TextView textView=new TextView(this);
+                textView.setText("  Welcome to \"MyPoll\" app\n\n  By \"Mypoll\", the decision between a group of people on a meet, trip, or anything else becomes much easier:\n\n" +
+                        "  -Got an occasion soon?. Create a new poll with available choices to be voted and share it with your friends. See what they preferred among the choices.\n\n" +
+                        "  -It requires two clicks for participating in polls you've been invited to.\n\n" +
+                        "  -Manage your Current and history polls with no hardworking.\n\n"+
+                        "  YES IT'S THAT SIMPLE ! :)");
+                textView.setTextSize(20);
+                textView.setBackground(getResources().getDrawable(R.drawable.bluebg));
+                textView.setTextColor(getResources().getColor(R.color.colorPrimaryDark));
+                textView.setPadding(20,20,20,20);
+                builder.setView(textView).show();
                 break;
             case R.id.sign_out:
                 reset=true;

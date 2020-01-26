@@ -59,14 +59,14 @@ import java.util.concurrent.ExecutionException;
 public class CurrentFragment extends Fragment {
     public static PollAdapter pollAdapter;
     public static ArrayList<PollView> arrayList;
-    public static ArrayList<String> keys,options,urls,types;
+    public static ArrayList<String> keys,options,urls,types,details;
     private ListView listView;
     private DatabaseReference databaseReference;
     private FirebaseAuth firebaseAuth;
     private FirebaseUser firebaseUser;
-    private String title, owner, date,time;
+    private String title, owner, date,time,detail;
     public static int pos=0,historyPos=0;
-    private static boolean reset=false;
+    public static boolean reset=false,download=true;
 
     @SuppressLint("ResourceAsColor")
     @Override
@@ -105,10 +105,12 @@ public class CurrentFragment extends Fragment {
         options=new ArrayList<>();
         urls=new ArrayList<>();
         types=new ArrayList<>();
+        details=new ArrayList<>();
         HistoryFragment.arrayList=new ArrayList<>();
         HistoryFragment.options=new ArrayList<>();
         HistoryFragment.urls=new ArrayList<>();
         HistoryFragment.keys=new ArrayList<>();
+        HistoryFragment.details=new ArrayList<>();
         HistoryFragment.pollAdapter=new PollAdapter(getContext(),HistoryFragment.arrayList);
     }
 
@@ -123,58 +125,62 @@ public class CurrentFragment extends Fragment {
         databaseReference.addChildEventListener(new ChildEventListener() {
             @Override
             public void onChildAdded(@NonNull DataSnapshot dataSnapshot, @Nullable String s) {
-                final String pollKey=dataSnapshot.getKey();
-                DatabaseReference dbr = FirebaseDatabase.getInstance().getReference("polls").child(pollKey);
-                dbr.addListenerForSingleValueEvent(new ValueEventListener() {
-                    @Override
-                    public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
-                        owner = dataSnapshot.child("owner_name").getValue().toString();
-                        title = dataSnapshot.child("title").getValue().toString();
-                        date = dataSnapshot.child("date").getValue().toString();
-                        time = dataSnapshot.child("time").getValue().toString();
-                        if (dataSnapshot.child("owner_id").getValue().toString().equals(firebaseUser.getUid()))
-                            owner = "by you";
-                        else
-                            owner = "by \"" + owner + "\"";
-                        Object url = dataSnapshot.child("image_url").getValue();
-                        if(dataSnapshot.child("state").getValue().toString().equals("opened")) {
-                            arrayList.add(new PollView(null, title, owner, date + "\n" + time));
-                            if (url != null) {
-                                urls.add(url.toString());
-                                new ImageDownloader().execute(url.toString(), "" + pos);
-                            } else
-                                urls.add(null);
-                            pos++;
-                            types.add(dataSnapshot.child("type").getValue().toString());
-                            keys.add(pollKey);
+                if(download) {
+                    final String pollKey = dataSnapshot.getKey();
+                    DatabaseReference dbr = FirebaseDatabase.getInstance().getReference("polls").child(pollKey);
+                    dbr.addListenerForSingleValueEvent(new ValueEventListener() {
+                        @Override
+                        public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+                            owner = dataSnapshot.child("owner_name").getValue().toString();
+                            title = dataSnapshot.child("title").getValue().toString();
+                            date = dataSnapshot.child("date").getValue().toString();
+                            time = dataSnapshot.child("time").getValue().toString();
+                            detail = dataSnapshot.child("details").getValue().toString();
+                            if (dataSnapshot.child("owner_id").getValue().toString().equals(firebaseUser.getUid()))
+                                owner = "by you";
+                            else
+                                owner = "by \"" + owner + "\"";
+                            Object url = dataSnapshot.child("image_url").getValue();
+                            if (dataSnapshot.child("state").getValue().toString().equals("opened")) {
+                                arrayList.add(new PollView(null, title, owner, date + "\n" + time));
+                                if (url != null) {
+                                    urls.add(url.toString());
+                                    new ImageDownloader().execute(url.toString(), "" + pos);
+                                } else
+                                    urls.add(null);
+                                pos++;
+                                types.add(dataSnapshot.child("type").getValue().toString());
+                                keys.add(pollKey);
+                            } else {
+                                HistoryFragment.arrayList.add(new PollView(null, title, owner, date + "\n" + time));
+                                if (url != null) {
+                                    HistoryFragment.urls.add(url.toString());
+                                    new HistoryImageDownloader().execute(url.toString(), "" + historyPos);
+                                } else
+                                    HistoryFragment.urls.add(null);
+                                historyPos++;
+                                HistoryFragment.keys.add(pollKey);
+                            }
+                            Iterator iterator = dataSnapshot.child("options").getChildren().iterator();
+                            String string = "";
+                            while (iterator.hasNext())
+                                string += ((DataSnapshot) iterator.next()).getKey() + "#";
+                            if (dataSnapshot.child("state").getValue().toString().equals("opened")) {
+                                options.add(string);
+                                pollAdapter.notifyDataSetChanged();
+                                details.add(detail);
+                            } else {
+                                HistoryFragment.options.add(string);
+                                HistoryFragment.pollAdapter.notifyDataSetChanged();
+                                HistoryFragment.details.add(detail);
+                            }
                         }
-                        else{
-                            HistoryFragment.arrayList.add(new PollView(null, title, owner, date + "\n" + time));
-                            if (url != null) {
-                                HistoryFragment.urls.add(url.toString());
-                                new HistoryImageDownloader().execute(url.toString(), "" + historyPos);
-                            } else
-                                HistoryFragment.urls.add(null);
-                            historyPos++;
-                            HistoryFragment.keys.add(pollKey);
+
+                        @Override
+                        public void onCancelled(@NonNull DatabaseError databaseError) {
                         }
-                        Iterator iterator=dataSnapshot.child("options").getChildren().iterator();
-                        String string="";
-                        while(iterator.hasNext())
-                            string+=((DataSnapshot)iterator.next()).getValue().toString()+"%#&";
-                        if(dataSnapshot.child("state").getValue().toString().equals("opened")) {
-                            options.add(string);
-                            pollAdapter.notifyDataSetChanged();
-                        }
-                        else{
-                            HistoryFragment.options.add(string);
-                            HistoryFragment.pollAdapter.notifyDataSetChanged();
-                        }
-                    }
-                    @Override
-                    public void onCancelled(@NonNull DatabaseError databaseError) {
-                    }
-                });
+                    });
+                }
             }
             @Override
             public void onChildChanged(@NonNull DataSnapshot dataSnapshot, @Nullable String s) { }
@@ -245,12 +251,14 @@ public class CurrentFragment extends Fragment {
             HistoryFragment.options.clear();
             HistoryFragment.urls.clear();
             HistoryFragment.pollAdapter.notifyDataSetChanged();
+            HistoryFragment.details.clear();
             pos=0;
             arrayList.clear();
             keys.clear();
             options.clear();
             urls.clear();
             types.clear();
+            details.clear();
             pollAdapter.notifyDataSetChanged();
             initialize();
             fillArray();
@@ -258,24 +266,5 @@ public class CurrentFragment extends Fragment {
         }
     }
 
-    public static void reset(){
-        reset=true;
-    }
 
-    @Override
-    public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
-        inflater.inflate(R.menu.current_menu,menu);
-//        MenuItem menuItem=menu.findItem(R.id.current_search);
-//        SearchView searchView=(SearchView) menuItem.getActionView();
-//        searchView.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
-//            @Override
-//            public boolean onQueryTextSubmit(String query) {
-//                return false; }
-//            @Override
-//            public boolean onQueryTextChange(String newText) {
-//                Toast.makeText(getContext(),"new",Toast.LENGTH_SHORT).show();
-//                return false;
-//            }
-//        });
-    }
 }

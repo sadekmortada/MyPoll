@@ -19,6 +19,7 @@ import android.os.CountDownTimer;
 import android.provider.ContactsContract;
 import android.text.SpannableString;
 import android.text.style.UnderlineSpan;
+import android.util.Log;
 import android.view.Gravity;
 import android.view.View;
 import android.view.ViewGroup;
@@ -48,7 +49,7 @@ import de.hdodenhof.circleimageview.CircleImageView;
 public class OwnerActivity extends AppCompatActivity {
     private CircleImageView circleImageView;
     private String key;
-    private TextView pollKey,pollTitle;
+    private TextView pollKey,pollTitle,pollDetails;
     private DatabaseReference databaseReference;
     private int position;
     private LinearLayout optionsLayout;
@@ -74,6 +75,7 @@ public class OwnerActivity extends AppCompatActivity {
         optionsLayout=findViewById(R.id.options_layout);
         pollTitle=findViewById(R.id.owner_poll_title);
         pollKey=findViewById(R.id.poll_key);
+        pollDetails=findViewById(R.id.owner_poll_details);
         button=findViewById(R.id.close);
         Intent intent=getIntent();
         position=intent.getIntExtra("position",0);
@@ -82,6 +84,9 @@ public class OwnerActivity extends AppCompatActivity {
         pollTitle.setText(CurrentFragment.arrayList.get(position).getTitle());
         databaseReference= FirebaseDatabase.getInstance().getReference("polls").child(key);
         voters=new ArrayList<>();
+        String details=CurrentFragment.details.get(position);
+        if(!details.equals(""))
+            pollDetails.setText("Details: "+details);
         if(CurrentFragment.urls.get(position)!=null) {
             counter = new CountDownTimer(60000, 1000) {
                 @Override
@@ -98,11 +103,10 @@ public class OwnerActivity extends AppCompatActivity {
             };
         }
         builder = new AlertDialog.Builder(this);
-        builder.setIcon(android.R.drawable.ic_dialog_alert);
     }
 
     public void fillOptions(){
-        String[] options=CurrentFragment.options.get(position).split("%#&");
+        String[] options=CurrentFragment.options.get(position).split("#");
         for(int i=0;i<options.length;i++) {
             voters.add(new ArrayList<String>());
             final LinearLayout linearLayout=new LinearLayout(this);
@@ -115,13 +119,11 @@ public class OwnerActivity extends AppCompatActivity {
                 private int counter=0;
                 @Override
                 public void onChildAdded(@NonNull DataSnapshot dataSnapshot, @Nullable String s) {
-                    if(!dataSnapshot.getKey().equals("")) {
                         counter++;
                         String temp = votes.getText().toString();
                         temp = temp.substring(0, temp.length() - 1) + counter;
                         votes.setText(temp);
                         voters.get(index).add(dataSnapshot.getKey());
-                    }
                 }
                 @Override
                 public void onChildChanged(@NonNull DataSnapshot dataSnapshot, @Nullable String s) { }
@@ -157,7 +159,7 @@ public class OwnerActivity extends AppCompatActivity {
             option.setTextSize(20);
             votes.setTextSize(20);
             viewNames.setTextSize(20);
-            linearLayout.setPadding(15,70,15,70);
+            linearLayout.setPadding(40,70,40,70);
             linearLayout.setBackground(getResources().getDrawable(R.drawable.smallwoodenbg));
             linearLayout.setLayoutParams(new LinearLayout.LayoutParams(500, LinearLayout.LayoutParams.MATCH_PARENT));
             optionsLayout.addView(linearLayout);
@@ -183,10 +185,7 @@ public class OwnerActivity extends AppCompatActivity {
         ConnectivityManager connectivityManager = (ConnectivityManager)getSystemService(Context.CONNECTIVITY_SERVICE);
         if(!(connectivityManager.getNetworkInfo(ConnectivityManager.TYPE_MOBILE).getState() == NetworkInfo.State.CONNECTED ||
                 connectivityManager.getNetworkInfo(ConnectivityManager.TYPE_WIFI).getState() == NetworkInfo.State.CONNECTED)){
-            builder.setIcon(R.drawable.nowifismall).setTitle("No Internet Connection").setPositiveButton("Ok", new DialogInterface.OnClickListener() {
-                @Override
-                public void onClick(DialogInterface dialog, int which) { }
-            }).show();
+            builder.setIcon(R.drawable.nowifismall).setTitle("No Internet Connection").setPositiveButton("Ok", null).show();
             return;
         }
         builder.setIcon(android.R.drawable.ic_dialog_alert).setTitle("Are you sure?").setMessage("If you proceed, all the participants will be notified.\nYou can't reopen the poll again");
@@ -202,7 +201,7 @@ public class OwnerActivity extends AppCompatActivity {
                         while(iterator.hasNext()){
                             HashMap<String,Object> hashMap=new HashMap<>();
                             hashMap.put("title","Poll \""+pollTitle.getText().toString()+"\" is closed!");
-                            hashMap.put("body","Check Out");
+                            hashMap.put("body","Check out the results");
                             hashMap.put("type","close");
                             db.child(((DataSnapshot)iterator.next()).getKey()).push().setValue(hashMap);
                         }
@@ -216,6 +215,7 @@ public class OwnerActivity extends AppCompatActivity {
                 HistoryFragment.urls.add(CurrentFragment.urls.remove(position));
                 HistoryFragment.keys.add(CurrentFragment.keys.remove(position));
                 HistoryFragment.options.add(CurrentFragment.options.remove(position));
+                HistoryFragment.details.add(CurrentFragment.details.remove(position));
                 CurrentFragment.types.remove(position);
                 CurrentFragment.pos--;
                 Intent intent=new Intent(getApplicationContext(),ResultActivity.class);
@@ -223,8 +223,15 @@ public class OwnerActivity extends AppCompatActivity {
                 intent.putExtra("position",CurrentFragment.historyPos);
                 CurrentFragment.historyPos++;
                 startActivity(intent);
+                Toast.makeText(getApplicationContext(),"Closed Successfully",Toast.LENGTH_SHORT).show();
                 finish();
             }
         }).setNegativeButton("Cancel",null).show();
+    }
+
+    @Override
+    protected void onStop() {
+        super.onStop();
+        CurrentFragment.download=true;
     }
 }

@@ -35,4 +35,5 @@ public class PollAdapter extends ArrayAdapter <PollView>{
         textView.setText(pollView.getDate());
         return convertView;
     }
+
 }

@@ -7,11 +7,15 @@ import android.content.SharedPreferences;
 import android.os.Bundle;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.core.widget.NestedScrollView;
 import androidx.fragment.app.Fragment;
 
 import android.provider.ContactsContract;
 import android.view.LayoutInflater;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.WindowManager;
@@ -47,12 +51,18 @@ public class CreateJoinFragment extends Fragment {
     private FirebaseUser firebaseUser;
     private SharedPreferences sharedPreferences;
     private NestedScrollView nestedScrollView;
+
+    @Override
+    public void onCreate(@Nullable Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setHasOptionsMenu(true);
+    }
+
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         // Inflate the layout for this fragment
         View view=inflater.inflate(R.layout.fragment_create_join, container, false);
-
         initialize(view);
         create.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -71,9 +81,10 @@ public class CreateJoinFragment extends Fragment {
 
         join.setOnClickListener(new View.OnClickListener() {
             @Override
-            public void onClick(View v) {
+            public void onClick(final View v) {
                 key=editText2.getText().toString();
                 if(!key.equals("")) {
+                    v.setClickable(false);
                     databaseReference.child("polls").addListenerForSingleValueEvent(new ValueEventListener() {
                         @Override
                         public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
@@ -95,6 +106,7 @@ public class CreateJoinFragment extends Fragment {
                                                 if(key.equals(CurrentFragment.keys.get(i))){
                                                     Toast.makeText(getContext(),"You already joined before",Toast.LENGTH_SHORT).show();
                                                     flag=true;
+                                                    v.setClickable(true);
                                                     break;
                                                 }
                                             }
@@ -110,29 +122,36 @@ public class CreateJoinFragment extends Fragment {
                                                     public void onComplete(@NonNull Task<Void> task) {
                                                         if(task.isSuccessful())
                                                             startActivity(intent);
+                                                        v.setClickable(true);
                                                     }
                                                 });
                                             }
                                         }
-                                        else
-                                            Toast.makeText(getContext(),"This poll is closed",Toast.LENGTH_SHORT).show();
+                                        else {
+                                            Toast.makeText(getContext(), "This poll is closed", Toast.LENGTH_SHORT).show();
+                                            v.setClickable(true);
+                                        }
                                     }
-                                    else
-                                        Toast.makeText(getContext(),"You own this poll !",Toast.LENGTH_SHORT).show();
+                                    else {
+                                        Toast.makeText(getContext(), "You own this poll !", Toast.LENGTH_SHORT).show();
+                                        v.setClickable(true);
+                                    }
                                     break;
                                 }
                             }
-                            if(!exist)
-                                Toast.makeText(getContext(),"Wrong key",Toast.LENGTH_SHORT).show();
+                            if(!exist) {
+                                v.setClickable(true);
+                                Toast.makeText(getContext(), "Wrong key", Toast.LENGTH_SHORT).show();
+                            }
                         }
                         @Override
                         public void onCancelled(@NonNull DatabaseError databaseError) {
                         }
                     });
-                    editText1.setText("");
                 }
                 else
                     Toast.makeText(getContext(),"Key can't be empty",Toast.LENGTH_SHORT).show();
+                editText1.setText("");
             }
         });
         return view;
@@ -160,4 +179,6 @@ public class CreateJoinFragment extends Fragment {
         firebaseAuth=FirebaseAuth.getInstance();
         firebaseUser=firebaseAuth.getCurrentUser();
     }
+
+
 }

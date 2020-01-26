@@ -1,5 +1,6 @@
 package com.example.mypoll;
 
+import android.content.Intent;
 import android.os.Bundle;
 
 import androidx.fragment.app.Fragment;
@@ -9,6 +10,7 @@ import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.AdapterView;
 import android.widget.ListView;
 import android.widget.Toast;
 
@@ -17,7 +19,7 @@ import java.util.ArrayList;
 
 public class HistoryFragment extends Fragment {
     public static ArrayList<PollView> arrayList;
-    public static ArrayList<String> urls,options,keys;
+    public static ArrayList<String> urls,options,keys,details;
     public static PollAdapter pollAdapter;
     private static ListView listView;
     @Override
@@ -27,6 +29,16 @@ public class HistoryFragment extends Fragment {
         View view= inflater.inflate(R.layout.fragment_history, container, false);
         setHasOptionsMenu(true);
         initialize(view);
+        listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            @Override
+            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                Intent intent;
+                intent=new Intent(getContext(),ResultActivity.class);
+                intent.putExtra("key",keys.get(position));
+                intent.putExtra("position",position);
+                startActivity(intent);
+            }
+        });
         return view;
     }
     public void initialize(View view){
@@ -34,20 +46,4 @@ public class HistoryFragment extends Fragment {
         listView.setAdapter(pollAdapter);
     }
 
-    @Override
-    public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
-        inflater.inflate(R.menu.history_menu,menu);
-//        MenuItem menuItem=menu.findItem(R.id.app_bar_search);
-//        SearchView searchView=(SearchView) menuItem.getActionView();
-//        searchView.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
-//            @Override
-//            public boolean onQueryTextSubmit(String query) {
-//                return false; }
-//            @Override
-//            public boolean onQueryTextChange(String newText) {
-//                Toast.makeText(getContext(),"new",Toast.LENGTH_SHORT).show();
-//                return false;
-//            }
-//        });
-    }
 }

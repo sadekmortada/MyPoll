@@ -4,14 +4,19 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.widget.Toolbar;
 
+import android.content.Context;
 import android.content.Intent;
 import android.graphics.Bitmap;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 import android.os.Bundle;
 import android.os.CountDownTimer;
 import android.text.SpannableString;
 import android.text.style.UnderlineSpan;
 import android.view.Menu;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.WindowManager;
@@ -19,7 +24,11 @@ import android.widget.ArrayAdapter;
 import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.TextView;
+import android.widget.Toast;
 
+import com.google.android.gms.tasks.OnCompleteListener;
+import com.google.android.gms.tasks.Task;
+import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.database.ChildEventListener;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
@@ -33,7 +42,7 @@ import de.hdodenhof.circleimageview.CircleImageView;
 public class ResultActivity extends AppCompatActivity {
     private CircleImageView circleImageView;
     private String key;
-    private TextView pollTitle;
+    private TextView pollTitle,pollDetails;
     private DatabaseReference databaseReference;
     private int position;
     private LinearLayout resultsLayout;
@@ -44,6 +53,8 @@ public class ResultActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_result);
         getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_HIDDEN);
+        setSupportActionBar((Toolbar) findViewById(R.id.results_toolbar));
+        getSupportActionBar().setDisplayHomeAsUpEnabled(true);
         initialize();
         fillOptions();
         if(counter!=null)
@@ -54,12 +65,16 @@ public class ResultActivity extends AppCompatActivity {
         circleImageView=findViewById(R.id.result_poll_image);
         resultsLayout=findViewById(R.id.results_layout);
         pollTitle=findViewById(R.id.result_poll_title);
+        pollDetails=findViewById(R.id.result_poll_details);
         Intent intent=getIntent();
         position=intent.getIntExtra("position",0);
         key=intent.getStringExtra("key");
         pollTitle.setText(HistoryFragment.arrayList.get(position).getTitle());
         databaseReference= FirebaseDatabase.getInstance().getReference("polls").child(key).child("options");
         voters=new ArrayList<>();
+        String details=HistoryFragment.details.get(position);
+        if(!details.equals(""))
+            pollDetails.setText("Details: "+details);
         if(HistoryFragment.urls.get(position)!=null) {
             counter = new CountDownTimer(60000, 1000) {
                 @Override
@@ -77,7 +92,7 @@ public class ResultActivity extends AppCompatActivity {
     }
 
     public void fillOptions(){
-        String[] options=HistoryFragment.options.get(position).split("%#&");
+        String[] options=HistoryFragment.options.get(position).split("#");
         for(int i=0;i<options.length;i++) {
             voters.add(new ArrayList<String>());
             final LinearLayout linearLayout=new LinearLayout(this);
@@ -127,6 +142,9 @@ public class ResultActivity extends AppCompatActivity {
             option.setTextSize(20);
             votes.setTextSize(20);
             viewNames.setTextSize(20);
+            option.setTextAlignment(TextView.TEXT_ALIGNMENT_CENTER);
+            votes.setTextAlignment(TextView.TEXT_ALIGNMENT_CENTER);
+            viewNames.setTextAlignment(TextView.TEXT_ALIGNMENT_CENTER);
             linearLayout.setPadding(15,70,15,70);
             linearLayout.setBackground(getResources().getDrawable(R.drawable.smallwoodenbg));
             linearLayout.setLayoutParams(new LinearLayout.LayoutParams(500, LinearLayout.LayoutParams.MATCH_PARENT));
@@ -141,9 +159,39 @@ public class ResultActivity extends AppCompatActivity {
         builder.setView(listView).show();
     }
 
-//    @Override
-//    public boolean onCreateOptionsMenu(Menu menu) {
-//        getMenuInflater().inflate(R.menu.results_menu,menu);
-//        return true;
-//    }
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        getMenuInflater().inflate(R.menu.result_menu,menu);
+        return true;
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(@NonNull MenuItem item) {
+        if(item.getItemId()==R.id.delete){
+            HistoryFragment.arrayList.remove(position);
+            HistoryFragment.pollAdapter.notifyDataSetChanged();
+            HistoryFragment.urls.remove(position);
+            HistoryFragment.keys.remove(position);
+            HistoryFragment.options.remove(position);
+            HistoryFragment.details.remove(position);
+            CurrentFragment.historyPos--;
+            ConnectivityManager connectivityManager = (ConnectivityManager)getSystemService(Context.CONNECTIVITY_SERVICE);
+            if(!(connectivityManager.getNetworkInfo(ConnectivityManager.TYPE_MOBILE).getState() == NetworkInfo.State.CONNECTED ||
+                    connectivityManager.getNetworkInfo(ConnectivityManager.TYPE_WIFI).getState() == NetworkInfo.State.CONNECTED)){
+                android.app.AlertDialog.Builder builder = new android.app.AlertDialog.Builder(this);
+                builder.setIcon(R.drawable.nowifismall).setTitle("No Internet Connection").setMessage("Poll deleted locally from your device.\nYou must be connected to the internet to remove it from the cloud..").setPositiveButton("Ok", null).show();
+                return true;
+            }
+            FirebaseDatabase.getInstance().getReference("users").child(FirebaseAuth.getInstance().getCurrentUser().getUid()).child("polls").child(key).removeValue().addOnCompleteListener(new OnCompleteListener<Void>() {
+                @Override
+                public void onComplete(@NonNull Task<Void> task) {
+                    if(task.isSuccessful()){
+                        Toast.makeText(getApplicationContext(),"Deleted Successfully",Toast.LENGTH_SHORT).show();
+                        finish();
+                    }
+                }
+            });
+        }
+        return super.onOptionsItemSelected(item);
+    }
 }

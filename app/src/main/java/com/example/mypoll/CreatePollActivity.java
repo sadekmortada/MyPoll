@@ -7,13 +7,18 @@ import androidx.core.widget.NestedScrollView;
 
 import android.app.AlertDialog;
 import android.app.ProgressDialog;
+import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.graphics.Bitmap;
 import android.graphics.drawable.GradientDrawable;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
+import android.provider.MediaStore;
 import android.text.Editable;
 import android.text.InputFilter;
 import android.text.InputType;
@@ -49,6 +54,7 @@ import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageReference;
 import com.google.firebase.storage.UploadTask;
 
+import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -73,8 +79,7 @@ public class CreatePollActivity extends AppCompatActivity {
     private HashMap<String,Object> options;
     private HashMap<String,Object> info;
     private SharedPreferences sharedPreferences;
-    private NestedScrollView nestedScrollView;
-    private String filtered=".$[]#\\/";
+    private String filtered=".$[]#/",pollOptions="";
     private InputFilter[] inputFilters;
     private int i=2;
     @Override
@@ -90,7 +95,6 @@ public class CreatePollActivity extends AppCompatActivity {
         spinner=findViewById(R.id.spinner);
         linearLayout=findViewById(R.id.options_container);
         circleImageView=findViewById(R.id.poll_image);
-        nestedScrollView=findViewById(R.id.nested_scroll_view);
         firebaseAuth=FirebaseAuth.getInstance();
         firebaseUser=firebaseAuth.getCurrentUser();
         DatabaseReference db=FirebaseDatabase.getInstance().getReference("polls").push();
@@ -110,7 +114,7 @@ public class CreatePollActivity extends AppCompatActivity {
             public CharSequence filter(CharSequence source, int start, int end, Spanned dest, int dstart, int dend) {
                 if (source != null && filtered.contains("" + source))
                     return "";
-                return null; }},new InputFilter.LengthFilter(17)};
+                return null; }},new InputFilter.LengthFilter(20)};
         ((EditText)findViewById(R.id.edit_1)).setFilters(inputFilters);
         ((EditText)findViewById(R.id.edit_2)).setFilters(inputFilters);
     }
@@ -169,6 +173,13 @@ public class CreatePollActivity extends AppCompatActivity {
     }
 
     public void createPoll(View view){
+        ConnectivityManager connectivityManager = (ConnectivityManager)getSystemService(Context.CONNECTIVITY_SERVICE);
+        if(!(connectivityManager.getNetworkInfo(ConnectivityManager.TYPE_MOBILE).getState() == NetworkInfo.State.CONNECTED ||
+                connectivityManager.getNetworkInfo(ConnectivityManager.TYPE_WIFI).getState() == NetworkInfo.State.CONNECTED)){
+            AlertDialog.Builder builder = new AlertDialog.Builder(this);
+            builder.setIcon(R.drawable.nowifismall).setTitle("No Internet Connection").setPositiveButton("Ok", null).show();
+            return;
+        }
         progressDialog.show();
         pollTitle=title.getText().toString();
         pollDetails=details.getText().toString();
@@ -182,16 +193,21 @@ public class CreatePollActivity extends AppCompatActivity {
             if(option.equals("")){
                 Toast.makeText(this,"Options can't be empty",Toast.LENGTH_SHORT).show();
                 progressDialog.dismiss();
+                options.clear();
+                pollOptions="";
                 return;
             }
-            else
-                options.put(""+i, option);
+            else {
+                options.put(option, "");
+                pollOptions+=option+"#";
+            }
         }
         Calendar calendar=Calendar.getInstance(TimeZone.getTimeZone(Time.getCurrentTimezone()));
         SimpleDateFormat simpleDateFormat=new SimpleDateFormat("dd MMM, yyyy");
-        String currentDate=simpleDateFormat.format(calendar.getTime());
+        final String currentDate=simpleDateFormat.format(calendar.getTime());
         simpleDateFormat=new SimpleDateFormat("hh:mm a");
-        String currentTime=simpleDateFormat.format(calendar.getTime());
+        final String currentTime=simpleDateFormat.format(calendar.getTime());
+        final String pollType=spinner.getSelectedItem().toString();
         info.put("owner_name",sharedPreferences.getString("user_name",""));
         info.put("owner_id",firebaseUser.getUid());
         info.put("title",pollTitle);
@@ -199,10 +215,11 @@ public class CreatePollActivity extends AppCompatActivity {
         info.put("date",currentDate);
         info.put("time",currentTime);
         info.put("state","opened");
-        info.put("type",spinner.getSelectedItem().toString());
+        info.put("type",pollType);
         final Intent intent=new Intent(this,OwnerActivity.class);
         intent.putExtra("key",pollKey);
         intent.putExtra("position",CurrentFragment.pos);
+        CurrentFragment.download=false; // prevent CurrentFragment from downloading the uploaded poll
         if(uri!=null) { //uploading image and its url
             storageReference.putFile(uri).continueWithTask(new Continuation<UploadTask.TaskSnapshot, Task<Uri>>() {
                 @Override
@@ -215,7 +232,8 @@ public class CreatePollActivity extends AppCompatActivity {
                 @Override
                 public void onComplete(@NonNull Task<Uri> task) {
                     if (task.isSuccessful()) {
-                        info.put("image_url", task.getResult().toString());
+                        final String imageUrl=task.getResult().toString();
+                        info.put("image_url", imageUrl);
                         databaseReference.child("options").setValue(options);
                         databaseReference.updateChildren(info).addOnCompleteListener(new OnCompleteListener<Void>() {
                             @Override
@@ -223,10 +241,13 @@ public class CreatePollActivity extends AppCompatActivity {
                                 usersReference.child("polls").child(pollKey).setValue("").addOnCompleteListener(new OnCompleteListener<Void>() {
                                     @Override
                                     public void onComplete(@NonNull Task<Void> task) {
-                                        progressDialog.dismiss();
-                                        startActivity(intent);
-                                        Toast.makeText(getApplicationContext(), "Published !", Toast.LENGTH_SHORT).show();
-                                        finish();
+                                        Bitmap bitmap=null;
+                                        try {
+                                            bitmap = MediaStore.Images.Media.getBitmap(getContentResolver(), uri);
+                                        } catch (IOException e) {
+                                            e.printStackTrace();
+                                        }
+                                        addPoll(new PollView(bitmap,pollTitle,"by you",currentDate+"\n"+currentTime),pollKey,pollDetails,imageUrl,pollType,pollOptions,intent);
                                     }
                                 });
                             }
@@ -243,15 +264,27 @@ public class CreatePollActivity extends AppCompatActivity {
                     usersReference.child("polls").child(pollKey).setValue("").addOnCompleteListener(new OnCompleteListener<Void>() {
                         @Override
                         public void onComplete(@NonNull Task<Void> task) {
-                            progressDialog.dismiss();
-                            startActivity(intent);
-                            Toast.makeText(getApplicationContext(), "Published !", Toast.LENGTH_SHORT).show();
-                            finish();
+                            addPoll(new PollView(null,pollTitle,"by you",currentDate+"\n"+currentTime),pollKey,pollDetails,null,pollType,pollOptions,intent);
                         }
                     });
                 }
             });
         }
+    }
+
+    public void addPoll(PollView pollView,String pollKey,String pollDetails,String imageUrl,String pollType,String pollOptions,Intent intent){
+        progressDialog.dismiss();
+        CurrentFragment.arrayList.add(pollView);
+        CurrentFragment.keys.add(pollKey);
+        CurrentFragment.details.add(pollDetails);
+        CurrentFragment.urls.add(imageUrl);
+        CurrentFragment.types.add(pollType);
+        CurrentFragment.options.add(pollOptions);
+        CurrentFragment.pollAdapter.notifyDataSetChanged();
+        CurrentFragment.pos++;
+        startActivity(intent);
+        Toast.makeText(getApplicationContext(), "Published !", Toast.LENGTH_SHORT).show();
+        finish();
     }
 
     public void addDate(final View view){
