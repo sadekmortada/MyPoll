@@ -40,7 +40,7 @@ public class MainActivity extends AppCompatActivity {
     private MyViewPagerAdapter myViewPagerAdapter;
     private DatabaseReference databaseReference;
     private SharedPreferences sharedPreferences;
-    public boolean reset=true;
+    public boolean reset=true; // boolean used to know if we want to reset the notification listener if the user logged out and logged in again
     private static Notification.Builder builder;
     private static Notification notification;
     private static NotificationManager notificationManager;
@@ -53,7 +53,7 @@ public class MainActivity extends AppCompatActivity {
     public void notification(){
         firebaseUser=firebaseAuth.getCurrentUser();
         databaseReference= FirebaseDatabase.getInstance().getReference("notifications").child(firebaseUser.getUid());
-        databaseReference.setValue(""); //erase the database before listening
+        databaseReference.setValue(""); // erase the notifications database before listening because there maybe old notifications still saved and we want to listen for new ones
         databaseReference.addChildEventListener(new ChildEventListener() {
                 @Override
                 public void onChildAdded(@NonNull DataSnapshot dataSnapshot, @Nullable String s) {
@@ -136,7 +136,7 @@ public class MainActivity extends AppCompatActivity {
                 break;
             case R.id.sign_out:
                 reset=true;
-                sharedPreferences.edit().clear().apply();
+                sharedPreferences.edit().clear().apply(); // clear the shared preferences, which contains the user name
                 firebaseAuth.signOut();
                 startActivity(new Intent(this,LoginActivity.class));
                 break;

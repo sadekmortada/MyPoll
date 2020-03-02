@@ -66,12 +66,12 @@ public class CurrentFragment extends Fragment {
     private FirebaseUser firebaseUser;
     private String title, owner, date,time,detail;
     public static int pos=0,historyPos=0;
-    public static boolean reset=false,download=true;
-
+    public static boolean reset=false,download=true;/* reset is used to know if user logged out in order to reset the listView and the arrayLists..
+                                                    download is used to know if user created poll to prevent from downloading it since created polls are directly sent to
+                                                    the listView in the CurrentFragment*/
     @SuppressLint("ResourceAsColor")
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-        // Inflate the layout for this fragment
         View view = inflater.inflate(R.layout.fragment_current, container, false);
         getActivity().getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_HIDDEN);
 
@@ -106,12 +106,6 @@ public class CurrentFragment extends Fragment {
         urls=new ArrayList<>();
         types=new ArrayList<>();
         details=new ArrayList<>();
-        HistoryFragment.arrayList=new ArrayList<>();
-        HistoryFragment.options=new ArrayList<>();
-        HistoryFragment.urls=new ArrayList<>();
-        HistoryFragment.keys=new ArrayList<>();
-        HistoryFragment.details=new ArrayList<>();
-        HistoryFragment.pollAdapter=new PollAdapter(getContext(),HistoryFragment.arrayList);
     }
 
     public void initialize(){
@@ -125,7 +119,7 @@ public class CurrentFragment extends Fragment {
         databaseReference.addChildEventListener(new ChildEventListener() {
             @Override
             public void onChildAdded(@NonNull DataSnapshot dataSnapshot, @Nullable String s) {
-                if(download) {
+                if(download) { //to prevent downloading created polls by user, since they are passed to the arrayList of current polls with no need to download them again
                     final String pollKey = dataSnapshot.getKey();
                     DatabaseReference dbr = FirebaseDatabase.getInstance().getReference("polls").child(pollKey);
                     dbr.addListenerForSingleValueEvent(new ValueEventListener() {
@@ -141,7 +135,8 @@ public class CurrentFragment extends Fragment {
                             else
                                 owner = "by \"" + owner + "\"";
                             Object url = dataSnapshot.child("image_url").getValue();
-                            if (dataSnapshot.child("state").getValue().toString().equals("opened")) {
+                            String state=dataSnapshot.child("state").getValue().toString();
+                            if (state.equals("opened")||state.equals("auto")) {
                                 arrayList.add(new PollView(null, title, owner, date + "\n" + time));
                                 if (url != null) {
                                     urls.add(url.toString());
@@ -151,7 +146,8 @@ public class CurrentFragment extends Fragment {
                                 pos++;
                                 types.add(dataSnapshot.child("type").getValue().toString());
                                 keys.add(pollKey);
-                            } else {
+                            }
+                            else {
                                 HistoryFragment.arrayList.add(new PollView(null, title, owner, date + "\n" + time));
                                 if (url != null) {
                                     HistoryFragment.urls.add(url.toString());
@@ -165,7 +161,7 @@ public class CurrentFragment extends Fragment {
                             String string = "";
                             while (iterator.hasNext())
                                 string += ((DataSnapshot) iterator.next()).getKey() + "#";
-                            if (dataSnapshot.child("state").getValue().toString().equals("opened")) {
+                            if (state.equals("opened")||state.equals("auto")) {
                                 options.add(string);
                                 pollAdapter.notifyDataSetChanged();
                                 details.add(detail);
@@ -244,7 +240,7 @@ public class CurrentFragment extends Fragment {
     @Override
     public void onResume() {
         super.onResume();
-        if(reset){
+        if(reset){ //this is true when user logs out and logs in again, so we need to clear all variables and fill the listViews with new data of the logged in account
             historyPos=0;
             HistoryFragment.arrayList.clear();
             HistoryFragment.keys.clear();
@@ -260,7 +256,7 @@ public class CurrentFragment extends Fragment {
             types.clear();
             details.clear();
             pollAdapter.notifyDataSetChanged();
-            initialize();
+            initialize(); // this initializes the firebase user
             fillArray();
             reset=false;
         }

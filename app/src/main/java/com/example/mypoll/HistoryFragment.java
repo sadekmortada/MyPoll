@@ -23,12 +23,12 @@ public class HistoryFragment extends Fragment {
     public static PollAdapter pollAdapter;
     private static ListView listView;
     @Override
-    public View onCreateView(LayoutInflater inflater, ViewGroup container,
-                             Bundle savedInstanceState) {
+    public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         // Inflate the layout for this fragment
         View view= inflater.inflate(R.layout.fragment_history, container, false);
         setHasOptionsMenu(true);
         initialize(view);
+        initialize();
         listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
@@ -43,6 +43,14 @@ public class HistoryFragment extends Fragment {
     }
     public void initialize(View view){
         listView=view.findViewById(R.id.history_listview);
+    }
+    public void initialize(){
+        arrayList = new ArrayList<>();
+        options = new ArrayList<>();
+        urls = new ArrayList<>();
+        keys = new ArrayList<>();
+        details = new ArrayList<>();
+        pollAdapter = new PollAdapter(getContext(), arrayList);
         listView.setAdapter(pollAdapter);
     }
 

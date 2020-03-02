@@ -1,6 +1,8 @@
 package com.example.mypoll;
 
 
+import android.app.AlarmManager;
+import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -12,6 +14,7 @@ import androidx.core.widget.NestedScrollView;
 import androidx.fragment.app.Fragment;
 
 import android.provider.ContactsContract;
+import android.text.format.Time;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -33,10 +36,14 @@ import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
 
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Date;
 import java.util.EventListener;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.TimeZone;
 
 
 /**
@@ -91,26 +98,46 @@ public class CreateJoinFragment extends Fragment {
                             Iterator iterator=dataSnapshot.getChildren().iterator();
                             boolean exist=false;
                             while(iterator.hasNext()){
-                                DataSnapshot ds=(DataSnapshot)iterator.next();
-                                String string=ds.getKey();
+                                DataSnapshot ds =(DataSnapshot)iterator.next();
+                                String string = ds.getKey();
                                 if(key.equals(string)){
                                     exist=true;
-                                    String ownerId=ds.child("owner_id").getValue().toString();
-                                    if(!firebaseUser.getUid().equals(ds.child("owner_id").getValue().toString())) {
-                                        if(ds.child("state").getValue().equals("opened")) {
-                                            final Intent intent=new Intent(getContext(),ParticipantActivity.class);
-                                            intent.putExtra("key",key);
-                                            intent.putExtra("position",CurrentFragment.pos);
-                                            boolean flag=false;
+                                    String ownerId=ds.child("owner_id").getValue().toString(), state = ds.child("state").getValue().toString();
+                                    if(!firebaseUser.getUid().equals(ownerId)) {
+                                        if(state.equals("opened") || state.equals("auto")) {
+                                            boolean flag=true;
                                             for(int i=0;i<CurrentFragment.keys.size();i++){
                                                 if(key.equals(CurrentFragment.keys.get(i))){
                                                     Toast.makeText(getContext(),"You already joined before",Toast.LENGTH_SHORT).show();
-                                                    flag=true;
+                                                    flag=false;
                                                     v.setClickable(true);
                                                     break;
                                                 }
                                             }
-                                            if(!flag) {
+                                            if(flag) {
+                                                if(state.equals("auto")){ // check if it will be auto closed
+                                                    Calendar calendar=Calendar.getInstance(TimeZone.getTimeZone(Time.getCurrentTimezone()));
+                                                    SimpleDateFormat simpleDateFormat=new SimpleDateFormat("hh:mm:ss");
+                                                    try { //get current date and the date when poll was created to suntract and get difference in millis and then put alarm
+                                                        Date currentDate = simpleDateFormat.parse(simpleDateFormat.format(calendar.getTime()));
+                                                        Date createdDate = simpleDateFormat.parse(ds.child("time").getValue().toString());
+                                                        long difference=currentDate.getTime()-createdDate.getTime();
+                                                        if(difference>=60000){
+                                                            Toast.makeText(getContext(), "This poll is closed", Toast.LENGTH_SHORT).show();
+                                                            v.setClickable(true);
+                                                            break;
+                                                        }
+                                                        else{
+                                                            Intent i = new Intent(getContext(), NotificationBroadcastReceiver.class);
+                                                            i.putExtra("title", "Poll \""+ds.child("title").getValue().toString()+"\" is closed!");
+                                                            i.putExtra("body","Check out the results");
+                                                            i.putExtra("key",key);
+                                                            PendingIntent pendingIntent = PendingIntent.getBroadcast(getContext(),0, i, 0);
+                                                            AlarmManager alarmManager = (AlarmManager) getContext().getSystemService(Context.ALARM_SERVICE);
+                                                            alarmManager.set(AlarmManager.RTC_WAKEUP, System.currentTimeMillis() + difference, pendingIntent);
+                                                        }
+                                                    }catch(Exception e){}
+                                                }
                                                 databaseReference.child("users").child(firebaseUser.getUid()).child("polls").child(key).setValue("");
                                                 databaseReference.child("polls").child(key).child("participants").child(firebaseUser.getUid()).setValue("");
                                                 HashMap<String,Object> hashMap=new HashMap<>();
@@ -120,8 +147,12 @@ public class CreateJoinFragment extends Fragment {
                                                 databaseReference.child("notifications").child(ownerId).push().setValue(hashMap).addOnCompleteListener(new OnCompleteListener<Void>() {
                                                     @Override
                                                     public void onComplete(@NonNull Task<Void> task) {
-                                                        if(task.isSuccessful())
+                                                        if(task.isSuccessful()) {
+                                                            Intent intent=new Intent(getContext(),ParticipantActivity.class);
+                                                            intent.putExtra("key",key);
+                                                            intent.putExtra("position",CurrentFragment.pos);
                                                             startActivity(intent);
+                                                        }
                                                         v.setClickable(true);
                                                     }
                                                 });

@@ -49,7 +49,7 @@ import de.hdodenhof.circleimageview.CircleImageView;
 public class OwnerActivity extends AppCompatActivity {
     private CircleImageView circleImageView;
     private String key;
-    private TextView pollKey,pollTitle,pollDetails;
+    private TextView pollKey,pollTitle,pollDetails,date;
     private DatabaseReference databaseReference;
     private int position;
     private LinearLayout optionsLayout;
@@ -77,11 +77,13 @@ public class OwnerActivity extends AppCompatActivity {
         pollKey=findViewById(R.id.poll_key);
         pollDetails=findViewById(R.id.owner_poll_details);
         button=findViewById(R.id.close);
+        date=findViewById(R.id.owner_poll_date);
         Intent intent=getIntent();
         position=intent.getIntExtra("position",0);
         key=intent.getStringExtra("key");
         pollKey.setText(key);
         pollTitle.setText(CurrentFragment.arrayList.get(position).getTitle());
+        date.setText(CurrentFragment.arrayList.get(position).getDate());
         databaseReference= FirebaseDatabase.getInstance().getReference("polls").child(key);
         voters=new ArrayList<>();
         String details=CurrentFragment.details.get(position);

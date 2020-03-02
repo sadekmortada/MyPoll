@@ -5,7 +5,9 @@ import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.widget.NestedScrollView;
 
+import android.app.AlarmManager;
 import android.app.AlertDialog;
+import android.app.PendingIntent;
 import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.DialogInterface;
@@ -29,15 +31,19 @@ import android.view.Gravity;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
+import android.widget.CheckBox;
+import android.widget.CompoundButton;
 import android.widget.EditText;
 import android.widget.HorizontalScrollView;
 import android.widget.ImageButton;
 import android.widget.LinearLayout;
 import android.widget.Spinner;
+import android.widget.Switch;
 import android.widget.TableLayout;
 import android.widget.TableRow;
 import android.widget.TextView;
 import android.widget.Toast;
+import android.widget.ToggleButton;
 
 import com.google.android.gms.tasks.Continuation;
 import com.google.android.gms.tasks.OnCompleteListener;
@@ -81,6 +87,7 @@ public class CreatePollActivity extends AppCompatActivity {
     private SharedPreferences sharedPreferences;
     private String filtered=".$[]#/",pollOptions="";
     private InputFilter[] inputFilters;
+    private Switch switchButton;
     private int i=2;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -95,6 +102,7 @@ public class CreatePollActivity extends AppCompatActivity {
         spinner=findViewById(R.id.spinner);
         linearLayout=findViewById(R.id.options_container);
         circleImageView=findViewById(R.id.poll_image);
+        switchButton=findViewById(R.id.checked);
         firebaseAuth=FirebaseAuth.getInstance();
         firebaseUser=firebaseAuth.getCurrentUser();
         DatabaseReference db=FirebaseDatabase.getInstance().getReference("polls").push();
@@ -119,7 +127,7 @@ public class CreatePollActivity extends AppCompatActivity {
         ((EditText)findViewById(R.id.edit_2)).setFilters(inputFilters);
     }
 
-    public void addOption(View view) {
+    public void addChoice(View view) {
         i++;
         LinearLayout temp=new LinearLayout(this);
         temp.setOrientation(LinearLayout.HORIZONTAL);
@@ -135,22 +143,22 @@ public class CreatePollActivity extends AppCompatActivity {
                 addDate(v);
             }
         });
-        editText.setHint("option "+i);
+        editText.setHint("choice "+i);
         editText.setWidth((((LinearLayout)linearLayout.getChildAt(0)).getChildAt(0)).getWidth());
         editText.setInputType(InputType.TYPE_CLASS_TEXT);
         editText.setTextColor(getResources().getColor(R.color.colorPrimaryDark));
         editText.setFilters(inputFilters);
-        Toast.makeText(this,"Option added",Toast.LENGTH_SHORT).show();
+        Toast.makeText(this,"Choice added",Toast.LENGTH_SHORT).show();
     }
 
-    public void removeOption(View view){
+    public void removeChoice(View view){
         if(i!=2){
             linearLayout.removeViewAt(i-1);
             i--;
-            Toast.makeText(this,"Option removed",Toast.LENGTH_SHORT).show();
+            Toast.makeText(this,"Choice removed",Toast.LENGTH_SHORT).show();
         }
         else
-            Toast.makeText(this,"You must have at least two options",Toast.LENGTH_SHORT).show();
+            Toast.makeText(this,"You must have at least two choices",Toast.LENGTH_SHORT).show();
     }
 
     public void uploadPhoto(View view) {
@@ -166,10 +174,6 @@ public class CreatePollActivity extends AppCompatActivity {
             uri=data.getData();
             circleImageView.setImageURI(uri);
         }
-    }
-
-    public void cancel(View view) {
-        finish();
     }
 
     public void createPoll(View view){
@@ -191,7 +195,7 @@ public class CreatePollActivity extends AppCompatActivity {
         for(int i=0;i<linearLayout.getChildCount();i++) {
             String option=((EditText) ((LinearLayout)linearLayout.getChildAt(i)).getChildAt(0)).getText().toString();
             if(option.equals("")){
-                Toast.makeText(this,"Options can't be empty",Toast.LENGTH_SHORT).show();
+                Toast.makeText(this,"Choices can't be empty",Toast.LENGTH_SHORT).show();
                 progressDialog.dismiss();
                 options.clear();
                 pollOptions="";
@@ -205,7 +209,7 @@ public class CreatePollActivity extends AppCompatActivity {
         Calendar calendar=Calendar.getInstance(TimeZone.getTimeZone(Time.getCurrentTimezone()));
         SimpleDateFormat simpleDateFormat=new SimpleDateFormat("dd MMM, yyyy");
         final String currentDate=simpleDateFormat.format(calendar.getTime());
-        simpleDateFormat=new SimpleDateFormat("hh:mm a");
+        simpleDateFormat=new SimpleDateFormat("hh:mm:ss");
         final String currentTime=simpleDateFormat.format(calendar.getTime());
         final String pollType=spinner.getSelectedItem().toString();
         info.put("owner_name",sharedPreferences.getString("user_name",""));
@@ -214,8 +218,11 @@ public class CreatePollActivity extends AppCompatActivity {
         info.put("details",pollDetails);
         info.put("date",currentDate);
         info.put("time",currentTime);
-        info.put("state","opened");
         info.put("type",pollType);
+        if(switchButton.isChecked())
+            info.put("state","auto");
+        else
+            info.put("state","opened");
         final Intent intent=new Intent(this,OwnerActivity.class);
         intent.putExtra("key",pollKey);
         intent.putExtra("position",CurrentFragment.pos);
@@ -282,6 +289,15 @@ public class CreatePollActivity extends AppCompatActivity {
         CurrentFragment.options.add(pollOptions);
         CurrentFragment.pollAdapter.notifyDataSetChanged();
         CurrentFragment.pos++;
+        if(switchButton.isChecked()){
+            Intent i = new Intent(this, NotificationBroadcastReceiver.class);
+            i.putExtra("title", "Poll \""+pollTitle+"\" is closed!");
+            i.putExtra("body","Check out the results");
+            i.putExtra("key",pollKey);
+            PendingIntent pendingIntent = PendingIntent.getBroadcast(this,1, i, 0);
+            AlarmManager alarmManager = (AlarmManager) getSystemService(Context.ALARM_SERVICE);
+            alarmManager.set(AlarmManager.RTC_WAKEUP, System.currentTimeMillis() + 60000, pendingIntent);
+        }
         startActivity(intent);
         Toast.makeText(getApplicationContext(), "Published !", Toast.LENGTH_SHORT).show();
         finish();
@@ -395,6 +411,7 @@ public class CreatePollActivity extends AppCompatActivity {
             for(int j=0;j<7;j++)
                 for(int k=0;k<((TableRow)((TableLayout)linearLayout.getChildAt(i)).getChildAt(j)).getChildCount();k++)
                     ((TableRow)((TableLayout)linearLayout.getChildAt(i)).getChildAt(j)).getChildAt(k).setBackground(null);
-        view.setBackground(getResources().getDrawable(android.R.color.holo_blue_light));
+        view.setBackground(getResources().getDrawable(R.drawable.bluecircle));
     }
+
 }

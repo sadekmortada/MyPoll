@@ -17,6 +17,7 @@ import android.os.Bundle;
 import android.os.CountDownTimer;
 import android.text.SpannableString;
 import android.text.style.UnderlineSpan;
+import android.util.TypedValue;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.WindowManager;
@@ -31,6 +32,8 @@ import android.widget.Toast;
 
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.ChildEventListener;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
@@ -40,17 +43,19 @@ import com.google.firebase.database.ValueEventListener;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Iterator;
 
 import de.hdodenhof.circleimageview.CircleImageView;
 
 public class ParticipantActivity extends AppCompatActivity {
     private CircleImageView circleImageView;
     private String key,choice;
-    private TextView pollTitle,pollDetails;
+    private TextView pollTitle,pollDetails,wait,date;
     private ArrayList<String> choices;
     private DatabaseReference databaseReference;
     private SharedPreferences sharedPreferences;
     private int position;
+    private Button submitVote;
     private ProgressDialog progressDialog;
     private LinearLayout buttonsLayout,containerLayout,choicesLayout;
     private CountDownTimer counter;
@@ -65,6 +70,25 @@ public class ParticipantActivity extends AppCompatActivity {
         showChoices();
         if(counter!=null)
             counter.start();
+        checkVoted();
+    }
+    public void checkVoted(){
+        FirebaseDatabase.getInstance().getReference("users").child(FirebaseAuth.getInstance().getCurrentUser().getUid()).child("polls").child(key).addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+                if(dataSnapshot.getValue().toString().equals("voted")){
+                    submitVote.setAlpha(0);
+                    submitVote.setClickable(false);
+                    wait.setAlpha(1);
+                    for(int i=0;i<buttonsLayout.getChildCount();i++)
+                        buttonsLayout.getChildAt(i).setClickable(false);
+                    return;
+                }
+                submitVote.setAlpha(1);
+            }
+            @Override
+            public void onCancelled(@NonNull DatabaseError databaseError) { }
+        });
     }
 
     public void initialize(){
@@ -72,10 +96,14 @@ public class ParticipantActivity extends AppCompatActivity {
         circleImageView=findViewById(R.id.participant_poll_image);
         pollTitle=findViewById(R.id.participant_poll_title);
         pollDetails=findViewById(R.id.participant_poll_details);
+        submitVote=findViewById(R.id.submit_vote);
+        wait=findViewById(R.id.wait);
+        date=findViewById(R.id.participant_poll_date);
         Intent intent=getIntent();
         position=intent.getIntExtra("position",0);
         key=intent.getStringExtra("key");
         pollTitle.setText(CurrentFragment.arrayList.get(position).getTitle());
+        date.setText(CurrentFragment.arrayList.get(position).getDate());
         String details=CurrentFragment.details.get(position);
         if(!details.equals(""))
             pollDetails.setText("Details: "+details);
@@ -105,7 +133,8 @@ public class ParticipantActivity extends AppCompatActivity {
 
     public void showChoices(){
         final String[] options=CurrentFragment.options.get(position).split("#");
-        if(CurrentFragment.types.get(position).equals("single choice"))
+        boolean flag=CurrentFragment.types.get(position).equals("single choice");
+        if(flag)
             buttonsLayout=new RadioGroup(this);
         else
             buttonsLayout=new LinearLayout(this);
@@ -120,10 +149,10 @@ public class ParticipantActivity extends AppCompatActivity {
         choicesLayout.setPadding(0,0,0,10);
         containerLayout.setLayoutParams(new LinearLayout.LayoutParams(LinearLayout.LayoutParams.WRAP_CONTENT,LinearLayout.LayoutParams.WRAP_CONTENT));
         horizontalScrollView.addView(containerLayout);
-        boolean flag=CurrentFragment.types.get(position).equals("single choice");
         for(int i=0;i<options.length;i++) {
             TextView option=new TextView(this);
             option.setText(options[i]);
+            option.setTextSize(TypedValue.COMPLEX_UNIT_SP,20);
             option.setWidth(300);
             option.setTextColor(getResources().getColor(R.color.colorPrimaryDark));
             option.setPadding(20,0,20,15);
@@ -177,9 +206,9 @@ public class ParticipantActivity extends AppCompatActivity {
             public void onClick(DialogInterface dialog, int which) {
                 HashMap<String,Object> hashMap=new HashMap<>();
                 hashMap.put(sharedPreferences.getString("user_name",""),"");
-                if(choice!=null)
+                if(choice!=null) // if the poll is multiple choice, then this variable will stay null
                     databaseReference.child(choice).updateChildren(hashMap);
-                else {
+                else { // in the else we will iterate in the choices made by user and associate his name with each one in the database
                     for (int i = 0; i < choices.size(); i++)
                         databaseReference.child(choices.get(i)).updateChildren(hashMap);
                 }
@@ -195,11 +224,13 @@ public class ParticipantActivity extends AppCompatActivity {
                             @Override
                             public void onComplete(@NonNull Task<Void> task) {
                                 if(task.isSuccessful()){
-                                Toast.makeText(getApplicationContext(),"Voted Successfully",Toast.LENGTH_SHORT).show();
-                                view.setClickable(false);
-                                view.setAlpha(0);
-                                for(int i=0;i<buttonsLayout.getChildCount();i++)
-                                    buttonsLayout.getChildAt(i).setClickable(false);
+                                    db.child("users").child(FirebaseAuth.getInstance().getCurrentUser().getUid()).child("polls").child(key).setValue("voted");
+                                    Toast.makeText(getApplicationContext(),"Voted Successfully",Toast.LENGTH_SHORT).show();
+                                    view.setClickable(false);
+                                    view.setAlpha(0);
+                                    wait.setAlpha(1);
+                                    for(int i=0;i<buttonsLayout.getChildCount();i++)
+                                        buttonsLayout.getChildAt(i).setClickable(false);
                                 }
                                 else
                                     Toast.makeText(getApplicationContext(),"Oops, looks like an error happened!",Toast.LENGTH_SHORT).show();

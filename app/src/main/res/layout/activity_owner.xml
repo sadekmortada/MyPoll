@@ -5,38 +5,58 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     tools:context=".OwnerActivity"
-    android:background="@drawable/mypollbg"
-    android:padding="20dp">
-
-    <de.hdodenhof.circleimageview.CircleImageView
-        android:id="@+id/owner_poll_image"
-        android:layout_width="110dp"
-        android:layout_height="110dp"
-        android:src="@drawable/pollbg"
-        app:civ_border_color="@color/colorPrimary"
-        app:civ_border_width="5dp"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
-
-    <TextView
-        android:layout_width="wrap_content"
+    android:background="@drawable/mypollbg">
+    <androidx.appcompat.widget.Toolbar
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:id="@+id/owner_poll_title"
-        app:layout_constraintStart_toEndOf="@+id/owner_poll_image"
+        android:id="@+id/owner_toolbar"
+        app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        android:textSize="20sp"
-        android:textColor="@color/colorPrimaryDark"
-        android:layout_marginBottom="10dp" />
+        android:theme="@style/ThemeOverlay.AppCompat.Dark.ActionBar"
+        app:popupTheme="@style/Theme.AppCompat.Light"
+        android:background="@color/colorPrimary"
+        app:titleTextColor="@color/colorWhite"
+        android:padding="5dp">
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center_vertical">
+            <de.hdodenhof.circleimageview.CircleImageView
+                android:id="@+id/owner_poll_image"
+                android:layout_width="90dp"
+                android:layout_height="90dp"
+                android:src="@drawable/pollbg"
+                app:civ_border_color="@color/colorWhite"
+                app:civ_border_width="3dp"
+                />
+            <TextView
+                android:layout_weight="1"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:id="@+id/owner_poll_title"
+                android:layout_marginStart="20dp"
+                android:textSize="22sp"
+                android:textStyle="bold"
+                android:textColor="@color/colorWhite" />
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:id="@+id/owner_poll_date"
+                android:textSize="16sp"
+                android:textColor="@color/colorWhite" />
+        </LinearLayout>
+    </androidx.appcompat.widget.Toolbar>
+
 
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:id="@+id/blabla"
-        android:text="share key with friends\nlet them participate !!"
-        app:layout_constraintStart_toEndOf="@+id/owner_poll_image"
-        app:layout_constraintTop_toBottomOf="@id/owner_poll_title"
+        android:text="Share key with friends\nLet them participate !!"
+        app:layout_constraintTop_toBottomOf="@id/owner_toolbar"
         app:layout_constraintEnd_toEndOf="parent"
+        android:textSize="18sp"
+        app:layout_constraintStart_toStartOf="parent"
         android:textColor="@color/colorPrimaryDark"
         android:layout_marginTop="20dp"
         />
@@ -46,15 +66,15 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginTop="5dp"
-        app:layout_constraintStart_toEndOf="@+id/owner_poll_image"
         app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/blabla">
 
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="Key:"
-        android:textSize="20sp"
+        android:textSize="22sp"
         android:layout_marginEnd="3dp"
         android:textColor="@color/colorPrimaryDark"/>
     <TextView
@@ -68,8 +88,8 @@
         android:background="@drawable/smallblueframe"
         android:textColor="@color/colorPrimaryDark" />
     <ImageButton
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
+        android:layout_width="30dp"
+        android:layout_height="30dp"
         android:onClick="copyKey"
         android:layout_marginStart="3dp"
         android:layout_gravity="center"
@@ -82,27 +102,32 @@
         android:layout_height="wrap_content"
         android:id="@+id/owner_poll_details"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/owner_poll_image"
-        android:textSize="20sp"
+        app:layout_constraintTop_toBottomOf="@+id/key_container"
+        android:textSize="22sp"
+        android:layout_marginStart="20dp"
+        android:layout_marginEnd="20dp"
         android:layout_marginTop="20dp"
         android:textColor="@color/colorPrimaryDark"
-        android:width="300dp"/>
+        android:width="350dp"/>
 
     <TextView
         android:id="@+id/votings_text"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="Votings"
-        android:textSize="20sp"
-        android:layout_marginEnd="5dp"
+        android:layout_marginStart="20dp"
+        android:layout_marginEnd="20dp"
+        android:textSize="22sp"
         app:layout_constraintTop_toBottomOf="@+id/owner_poll_details"
         app:layout_constraintStart_toStartOf="parent"
-        android:layout_marginTop="20dp"
+        android:layout_marginTop="10dp"
         android:textColor="@color/colorPrimaryDark"/>
     <HorizontalScrollView
         android:id="@+id/votings_scroll"
         android:layout_width="match_parent"
         android:layout_height="180dp"
+        android:layout_marginStart="20dp"
+        android:layout_marginEnd="20dp"
         app:layout_constraintEnd_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toBottomOf="@id/votings_text"
@@ -116,69 +141,21 @@
     </HorizontalScrollView>
 
     <Button
+        android:paddingStart="10dp"
+        android:paddingEnd="10dp"
         android:layout_marginTop="10dp"
         android:id="@+id/close"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:background="@color/colorPrimary"
+        android:background="@drawable/buttonbg"
         android:text="Close Poll"
         android:onClick="closePoll"
+        android:layout_marginStart="20dp"
+        android:layout_marginEnd="20dp"
         android:textAllCaps="false"
         android:textColor="@color/colorWhite"
         android:textSize="20sp"
         app:layout_constraintTop_toBottomOf="@+id/votings_scroll"
         app:layout_constraintEnd_toEndOf="parent" />
-<!--    <TextView-->
-<!--        android:id="@+id/comments_text"-->
-<!--        android:layout_width="wrap_content"-->
-<!--        android:layout_height="wrap_content"-->
-<!--        android:text="Comments"-->
-<!--        android:textSize="20sp"-->
-<!--        android:layout_marginEnd="5dp"-->
-<!--        app:layout_constraintTop_toBottomOf="@+id/votings_scroll"-->
-<!--        app:layout_constraintStart_toStartOf="parent"-->
-<!--        android:layout_marginTop="20dp"-->
-<!--        android:textColor="@color/colorPrimaryDark"/>-->
-<!--    <LinearLayout-->
-<!--        android:layout_width="match_parent"-->
-<!--        android:layout_height="200dp"-->
-<!--        app:layout_constraintEnd_toStartOf="parent"-->
-<!--        app:layout_constraintEnd_toEndOf="parent"-->
-<!--        app:layout_constraintTop_toBottomOf="@id/comments_text"-->
-<!--        android:orientation="vertical"-->
-<!--        android:background="@drawable/blueframe"-->
-<!--        android:padding="10dp">-->
-<!--    <androidx.core.widget.NestedScrollView-->
-<!--        android:id="@+id/comments_scroll"-->
-<!--        android:layout_width="match_parent"-->
-<!--        android:layout_height="0dp"-->
-<!--        android:layout_weight="1"-->
-<!--        >-->
-<!--        <LinearLayout-->
-<!--            android:id="@+id/comments_layout"-->
-<!--            android:layout_width="match_parent"-->
-<!--            android:layout_height="match_parent"-->
-<!--            android:orientation="vertical"/>-->
-<!--    </androidx.core.widget.NestedScrollView>-->
-<!--        <LinearLayout-->
-<!--            android:layout_width="match_parent"-->
-<!--            android:layout_height="wrap_content"-->
-<!--            android:id="@+id/groupChatLinear"-->
-<!--            android:orientation="horizontal">-->
-<!--            <EditText-->
-<!--                android:id="@+id/owner_comment"-->
-<!--                android:layout_width="0dp"-->
-<!--                android:layout_weight="1"-->
-<!--                android:layout_height="wrap_content"-->
-<!--                android:hint="Type A Message"-->
-<!--                android:textColor="@color/colorPrimaryDark"-->
-<!--                android:inputType="textMultiLine"/>-->
-<!--            <ImageButton-->
-<!--                android:layout_width="wrap_content"-->
-<!--                android:layout_height="wrap_content"-->
-<!--                android:background="@drawable/send_message"-->
-<!--                 />-->
-<!--        </LinearLayout>-->
-<!--    </LinearLayout>-->
 
 </androidx.constraintlayout.widget.ConstraintLayout>
