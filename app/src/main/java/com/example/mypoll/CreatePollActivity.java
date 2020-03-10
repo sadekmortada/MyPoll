@@ -223,9 +223,6 @@ public class CreatePollActivity extends AppCompatActivity {
             info.put("state","auto");
         else
             info.put("state","opened");
-        final Intent intent=new Intent(this,OwnerActivity.class);
-        intent.putExtra("key",pollKey);
-        intent.putExtra("position",CurrentFragment.pos);
         CurrentFragment.download=false; // prevent CurrentFragment from downloading the uploaded poll
         if(uri!=null) { //uploading image and its url
             storageReference.putFile(uri).continueWithTask(new Continuation<UploadTask.TaskSnapshot, Task<Uri>>() {
@@ -254,12 +251,14 @@ public class CreatePollActivity extends AppCompatActivity {
                                         } catch (IOException e) {
                                             e.printStackTrace();
                                         }
-                                        addPoll(new PollView(bitmap,pollTitle,"by you",currentDate+"\n"+currentTime),pollKey,pollDetails,imageUrl,pollType,pollOptions,intent);
+                                        addPoll(new PollView(pollKey,bitmap,pollTitle,"by you",firebaseUser.getUid(),currentDate+"\n"+currentTime,pollType,pollOptions,imageUrl,pollDetails));
                                     }
                                 });
                             }
                         });
                     }
+                    else
+                        progressDialog.dismiss();
                 }
             });
         }
@@ -271,7 +270,7 @@ public class CreatePollActivity extends AppCompatActivity {
                     usersReference.child("polls").child(pollKey).setValue("").addOnCompleteListener(new OnCompleteListener<Void>() {
                         @Override
                         public void onComplete(@NonNull Task<Void> task) {
-                            addPoll(new PollView(null,pollTitle,"by you",currentDate+"\n"+currentTime),pollKey,pollDetails,null,pollType,pollOptions,intent);
+                            addPoll(new PollView(pollKey,null,pollTitle,"by you",firebaseUser.getUid(),currentDate+"\n"+currentTime,pollType,pollOptions,null,pollDetails));
                         }
                     });
                 }
@@ -279,16 +278,10 @@ public class CreatePollActivity extends AppCompatActivity {
         }
     }
 
-    public void addPoll(PollView pollView,String pollKey,String pollDetails,String imageUrl,String pollType,String pollOptions,Intent intent){
+    public void addPoll(PollView pollView){ // adds the poll to the current polls and starts the owner activity
         progressDialog.dismiss();
         CurrentFragment.arrayList.add(pollView);
-        CurrentFragment.keys.add(pollKey);
-        CurrentFragment.details.add(pollDetails);
-        CurrentFragment.urls.add(imageUrl);
-        CurrentFragment.types.add(pollType);
-        CurrentFragment.options.add(pollOptions);
         CurrentFragment.pollAdapter.notifyDataSetChanged();
-        CurrentFragment.pos++;
         if(switchButton.isChecked()){
             Intent i = new Intent(this, NotificationBroadcastReceiver.class);
             i.putExtra("title", "Poll \""+pollTitle+"\" is closed!");
@@ -298,12 +291,15 @@ public class CreatePollActivity extends AppCompatActivity {
             AlarmManager alarmManager = (AlarmManager) getSystemService(Context.ALARM_SERVICE);
             alarmManager.set(AlarmManager.RTC_WAKEUP, System.currentTimeMillis() + 60000, pendingIntent);
         }
+        Intent intent=new Intent(this,OwnerActivity.class);
+        intent.putExtra("key",pollKey);
+        intent.putExtra("position",CurrentFragment.arrayList.size()-1);
         startActivity(intent);
         Toast.makeText(getApplicationContext(), "Published !", Toast.LENGTH_SHORT).show();
         finish();
     }
 
-    public void addDate(final View view){
+    public void addDate(final View view){ // this function is to display the calendar when the user presses on it
         final EditText edit=(EditText)((LinearLayout)view.getParent()).getChildAt(0);
         final String old=edit.getText().toString();
         AlertDialog.Builder builder=new AlertDialog.Builder(this);
@@ -350,7 +346,7 @@ public class CreatePollActivity extends AppCompatActivity {
         }).setCancelable(false).show();
     }
 
-    public TableLayout myCalendar(final String month, int nbdays, int day, boolean sameMonth, final EditText view, final int y){
+    public TableLayout myCalendar(final String month, int nbdays, int day, boolean sameMonth, final EditText view, final int y){ // each time this function is executed, it returns view of a month and the available dates of it
         TableLayout tableLayout=new TableLayout(this);
         tableLayout.setBackground(getResources().getDrawable(R.drawable.smallwoodenframe));
         tableLayout.setLayoutParams(new LinearLayout.LayoutParams(LinearLayout.LayoutParams.WRAP_CONTENT,LinearLayout.LayoutParams.MATCH_PARENT));
@@ -403,7 +399,7 @@ public class CreatePollActivity extends AppCompatActivity {
         return tableLayout;
     }
 
-    public void chooseDate(View view,EditText editText,int d,String month,int y,LinearLayout linearLayout){
+    public void chooseDate(View view,EditText editText,int d,String month,int y,LinearLayout linearLayout){ // when pressed on day we must light it and turn off others
         editText.setText(d+" "+month+", "+y);
         if(d==-1)
             editText.setText("Today");

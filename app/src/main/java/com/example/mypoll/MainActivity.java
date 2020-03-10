@@ -9,6 +9,7 @@ import androidx.viewpager.widget.ViewPager;
 
 import android.app.AlertDialog;
 import android.app.Notification;
+import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.content.Context;
@@ -17,10 +18,12 @@ import android.content.SharedPreferences;
 import android.content.res.Resources;
 import android.graphics.BitmapFactory;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.EditText;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.google.android.material.tabs.TabLayout;
 import com.google.firebase.auth.FirebaseAuth;
@@ -30,6 +33,8 @@ import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
+
+import java.util.ArrayList;
 
 public class MainActivity extends AppCompatActivity {
     private FirebaseAuth firebaseAuth;
@@ -50,8 +55,8 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
         initialize();
     }
+
     public void notification(){
-        firebaseUser=firebaseAuth.getCurrentUser();
         databaseReference= FirebaseDatabase.getInstance().getReference("notifications").child(firebaseUser.getUid());
         databaseReference.setValue(""); // erase the notifications database before listening because there maybe old notifications still saved and we want to listen for new ones
         databaseReference.addChildEventListener(new ChildEventListener() {
@@ -88,12 +93,20 @@ public class MainActivity extends AppCompatActivity {
         firebaseUser=firebaseAuth.getCurrentUser();
         Intent notificationIntent = new Intent(this,MainActivity.class);
         PendingIntent contentIntent = PendingIntent.getActivity(this, 0, notificationIntent, PendingIntent.FLAG_CANCEL_CURRENT);
-        notificationManager = (NotificationManager)getSystemService(Context.NOTIFICATION_SERVICE);
         Resources res = getResources();
-        builder = new Notification.Builder(this);
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
+            notificationManager = getSystemService(NotificationManager.class);
+            NotificationChannel notificationChannel=new NotificationChannel("1","channel1",NotificationManager.IMPORTANCE_DEFAULT);
+            notificationManager.createNotificationChannel(notificationChannel);
+            builder=new Notification.Builder(this,"1");
+        }
+        else {
+            builder = new Notification.Builder(this);
+            notificationManager = (NotificationManager)getSystemService(Context.NOTIFICATION_SERVICE);
+        }
         builder.setContentIntent(contentIntent)
-                .setSmallIcon(R.drawable.common_google_signin_btn_icon_dark)
-                .setLargeIcon(BitmapFactory.decodeResource(res, R.drawable.common_google_signin_btn_icon_dark))
+                .setSmallIcon(R.drawable.notificationicon)
+                .setLargeIcon(BitmapFactory.decodeResource(res, R.drawable.notificationicon))
                 .setWhen(System.currentTimeMillis())
                 .setAutoCancel(true);
     }
@@ -110,6 +123,22 @@ public class MainActivity extends AppCompatActivity {
                 reset=false;
             }
         }
+    }
+
+    public static void moveToHistory(String key){  // we call this function twice, once in the owner activity when owner closes his poll, second in CurrentFragment when a poll is closed
+        int position=getPosition(CurrentFragment.arrayList,key);
+        HistoryFragment.arrayList.add(CurrentFragment.arrayList.remove(position));
+        CurrentFragment.pollAdapter.notifyDataSetChanged();
+        HistoryFragment.pollAdapter.notifyDataSetChanged();
+
+    }
+
+    public static int getPosition(ArrayList<PollView> arrayList, String key){ // method returns poll position in arrayList if found, else returns -1
+        for(int i=0;i<arrayList.size();i++)
+            if(arrayList.get(i).getKey().equals(key))
+                return i;
+        Log.i("Poll Not Found!","Poll Not Found!");
+        return -1;
     }
 
     @Override

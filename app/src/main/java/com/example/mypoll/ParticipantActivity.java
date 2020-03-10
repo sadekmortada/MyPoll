@@ -49,9 +49,9 @@ import de.hdodenhof.circleimageview.CircleImageView;
 
 public class ParticipantActivity extends AppCompatActivity {
     private CircleImageView circleImageView;
-    private String key,choice;
+    private String key,selection;
     private TextView pollTitle,pollDetails,wait,date;
-    private ArrayList<String> choices;
+    private ArrayList<String> selections;
     private DatabaseReference databaseReference;
     private SharedPreferences sharedPreferences;
     private int position;
@@ -100,14 +100,14 @@ public class ParticipantActivity extends AppCompatActivity {
         wait=findViewById(R.id.wait);
         date=findViewById(R.id.participant_poll_date);
         Intent intent=getIntent();
-        position=intent.getIntExtra("position",0);
         key=intent.getStringExtra("key");
+        position=MainActivity.getPosition(CurrentFragment.arrayList,key);
         pollTitle.setText(CurrentFragment.arrayList.get(position).getTitle());
         date.setText(CurrentFragment.arrayList.get(position).getDate());
-        String details=CurrentFragment.details.get(position);
+        String details=CurrentFragment.arrayList.get(position).getDetails();
         if(!details.equals(""))
             pollDetails.setText("Details: "+details);
-        if(CurrentFragment.urls.get(position)!=null) {
+        if(CurrentFragment.arrayList.get(position).getUrl()!=null) {
             counter = new CountDownTimer(60000, 1000) {
                 @Override
                 public void onTick(long mSUF) {
@@ -124,7 +124,7 @@ public class ParticipantActivity extends AppCompatActivity {
         databaseReference= FirebaseDatabase.getInstance().getReference("polls").child(key).child("options");
         builder = new AlertDialog.Builder(this);
         builder.setIcon(android.R.drawable.ic_dialog_alert).setPositiveButton("Ok", null);
-        choices=new ArrayList<>();
+        selections=new ArrayList<>();
         sharedPreferences=getSharedPreferences("user",MODE_PRIVATE);
         progressDialog=new ProgressDialog(this);
         progressDialog.setMessage("Please wait...");
@@ -132,8 +132,8 @@ public class ParticipantActivity extends AppCompatActivity {
     }
 
     public void showChoices(){
-        final String[] options=CurrentFragment.options.get(position).split("#");
-        boolean flag=CurrentFragment.types.get(position).equals("single choice");
+        final String[] choices=CurrentFragment.arrayList.get(position).getChoices().split("#");
+        boolean flag=CurrentFragment.arrayList.get(position).getType().equals("single choice");
         if(flag)
             buttonsLayout=new RadioGroup(this);
         else
@@ -149,11 +149,11 @@ public class ParticipantActivity extends AppCompatActivity {
         choicesLayout.setPadding(0,0,0,10);
         containerLayout.setLayoutParams(new LinearLayout.LayoutParams(LinearLayout.LayoutParams.WRAP_CONTENT,LinearLayout.LayoutParams.WRAP_CONTENT));
         horizontalScrollView.addView(containerLayout);
-        for(int i=0;i<options.length;i++) {
+        for(int i=0;i<choices.length;i++) {
             TextView option=new TextView(this);
-            option.setText(options[i]);
+            option.setText(choices[i]);
             option.setTextSize(TypedValue.COMPLEX_UNIT_SP,20);
-            option.setWidth(300);
+            option.setWidth(330);
             option.setTextColor(getResources().getColor(R.color.colorPrimaryDark));
             option.setPadding(20,0,20,15);
             choicesLayout.addView(option);
@@ -161,12 +161,12 @@ public class ParticipantActivity extends AppCompatActivity {
             if(flag){
                 RadioButton radioButton =new RadioButton(this);
                 buttonsLayout.addView(radioButton);
-                radioButton.setWidth(320);
+                radioButton.setWidth(330);
                 radioButton.setPadding(20,0,20,0);
                 radioButton.setOnClickListener(new View.OnClickListener() {
                     @Override
                     public void onClick(View v) {
-                        choice=options[index];
+                        selection=choices[index];
                     }
                 });
             }
@@ -179,9 +179,9 @@ public class ParticipantActivity extends AppCompatActivity {
                     @Override
                     public void onClick(View v) {
                         if(((CheckBox)v).isChecked())
-                            choices.add(options[index]);
+                            selections.add(choices[index]);
                         else{
-                            choices.remove(index);
+                            selections.remove(index);
                         }
                     }
                 });
@@ -196,7 +196,7 @@ public class ParticipantActivity extends AppCompatActivity {
             builder.setTitle("No Internet Connection").show();
             return;
         }
-        if(choice==null&&choices.size()==0){
+        if(selection==null&&selections.size()==0){
             Toast.makeText(this,"You must choose among choices",Toast.LENGTH_SHORT).show();
             return;
         }
@@ -206,11 +206,11 @@ public class ParticipantActivity extends AppCompatActivity {
             public void onClick(DialogInterface dialog, int which) {
                 HashMap<String,Object> hashMap=new HashMap<>();
                 hashMap.put(sharedPreferences.getString("user_name",""),"");
-                if(choice!=null) // if the poll is multiple choice, then this variable will stay null
-                    databaseReference.child(choice).updateChildren(hashMap);
+                if(selection!=null) // if the poll is multiple choice, then this variable will stay null
+                    databaseReference.child(selection).updateChildren(hashMap);
                 else { // in the else we will iterate in the choices made by user and associate his name with each one in the database
-                    for (int i = 0; i < choices.size(); i++)
-                        databaseReference.child(choices.get(i)).updateChildren(hashMap);
+                    for (int i = 0; i < selections.size(); i++)
+                        databaseReference.child(selections.get(i)).updateChildren(hashMap);
                 }
                 final DatabaseReference db=FirebaseDatabase.getInstance().getReference();
                 db.child("polls").child(key).child("owner_id").addListenerForSingleValueEvent(new ValueEventListener() {

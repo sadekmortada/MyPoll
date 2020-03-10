@@ -91,6 +91,7 @@ public class CreateJoinFragment extends Fragment {
             public void onClick(final View v) {
                 key=editText2.getText().toString();
                 if(!key.equals("")) {
+                    editText2.setText("");
                     v.setClickable(false);
                     databaseReference.child("polls").addListenerForSingleValueEvent(new ValueEventListener() {
                         @Override
@@ -105,29 +106,25 @@ public class CreateJoinFragment extends Fragment {
                                     String ownerId=ds.child("owner_id").getValue().toString(), state = ds.child("state").getValue().toString();
                                     if(!firebaseUser.getUid().equals(ownerId)) {
                                         if(state.equals("opened") || state.equals("auto")) {
-                                            boolean flag=true;
-                                            for(int i=0;i<CurrentFragment.keys.size();i++){
-                                                if(key.equals(CurrentFragment.keys.get(i))){
-                                                    Toast.makeText(getContext(),"You already joined before",Toast.LENGTH_SHORT).show();
-                                                    flag=false;
-                                                    v.setClickable(true);
-                                                    break;
-                                                }
+                                            if(MainActivity.getPosition(CurrentFragment.arrayList,key)!=-1){
+                                                Toast.makeText(getContext(),"You already joined before",Toast.LENGTH_SHORT).show();
+                                                v.setClickable(true);
                                             }
-                                            if(flag) {
+                                            else // else => not joined before
+                                                {
                                                 if(state.equals("auto")){ // check if it will be auto closed
                                                     Calendar calendar=Calendar.getInstance(TimeZone.getTimeZone(Time.getCurrentTimezone()));
                                                     SimpleDateFormat simpleDateFormat=new SimpleDateFormat("hh:mm:ss");
-                                                    try { //get current date and the date when poll was created to suntract and get difference in millis and then put alarm
+                                                    try { //get current date and the date when poll was created to subtract and get difference in millis
                                                         Date currentDate = simpleDateFormat.parse(simpleDateFormat.format(calendar.getTime()));
                                                         Date createdDate = simpleDateFormat.parse(ds.child("time").getValue().toString());
                                                         long difference=currentDate.getTime()-createdDate.getTime();
-                                                        if(difference>=60000){
+                                                        if(difference>=60000){ // means more than 60 seconds of time passes so it must be closed and can't join it
                                                             Toast.makeText(getContext(), "This poll is closed", Toast.LENGTH_SHORT).show();
                                                             v.setClickable(true);
                                                             break;
                                                         }
-                                                        else{
+                                                        else{ // else => we can join, and put an alarm
                                                             Intent i = new Intent(getContext(), NotificationBroadcastReceiver.class);
                                                             i.putExtra("title", "Poll \""+ds.child("title").getValue().toString()+"\" is closed!");
                                                             i.putExtra("body","Check out the results");
@@ -150,7 +147,6 @@ public class CreateJoinFragment extends Fragment {
                                                         if(task.isSuccessful()) {
                                                             Intent intent=new Intent(getContext(),ParticipantActivity.class);
                                                             intent.putExtra("key",key);
-                                                            intent.putExtra("position",CurrentFragment.pos);
                                                             startActivity(intent);
                                                         }
                                                         v.setClickable(true);
@@ -158,12 +154,12 @@ public class CreateJoinFragment extends Fragment {
                                                 });
                                             }
                                         }
-                                        else {
+                                        else { // else not opened or auto
                                             Toast.makeText(getContext(), "This poll is closed", Toast.LENGTH_SHORT).show();
                                             v.setClickable(true);
                                         }
                                     }
-                                    else {
+                                    else { // else he has the poll
                                         Toast.makeText(getContext(), "You own this poll !", Toast.LENGTH_SHORT).show();
                                         v.setClickable(true);
                                     }

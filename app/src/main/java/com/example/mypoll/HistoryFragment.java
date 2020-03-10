@@ -19,7 +19,7 @@ import java.util.ArrayList;
 
 public class HistoryFragment extends Fragment {
     public static ArrayList<PollView> arrayList;
-    public static ArrayList<String> urls,options,keys,details;
+//    public static ArrayList<String> urls,options,details;
     public static PollAdapter pollAdapter;
     private static ListView listView;
     @Override
@@ -34,7 +34,7 @@ public class HistoryFragment extends Fragment {
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
                 Intent intent;
                 intent=new Intent(getContext(),ResultActivity.class);
-                intent.putExtra("key",keys.get(position));
+                intent.putExtra("key",arrayList.get(position).getKey());
                 intent.putExtra("position",position);
                 startActivity(intent);
             }
@@ -46,10 +46,6 @@ public class HistoryFragment extends Fragment {
     }
     public void initialize(){
         arrayList = new ArrayList<>();
-        options = new ArrayList<>();
-        urls = new ArrayList<>();
-        keys = new ArrayList<>();
-        details = new ArrayList<>();
         pollAdapter = new PollAdapter(getContext(), arrayList);
         listView.setAdapter(pollAdapter);
     }

@@ -1,6 +1,5 @@
 package com.example.mypoll;
 
-
 import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.Intent;
@@ -52,20 +51,16 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.concurrent.ExecutionException;
 
-
 /**
  * A simple {@link Fragment} subclass.
  */
 public class CurrentFragment extends Fragment {
     public static PollAdapter pollAdapter;
     public static ArrayList<PollView> arrayList;
-    public static ArrayList<String> keys,options,urls,types,details;
     private ListView listView;
     private DatabaseReference databaseReference;
     private FirebaseAuth firebaseAuth;
     private FirebaseUser firebaseUser;
-    private String title, owner, date,time,detail;
-    public static int pos=0,historyPos=0;
     public static boolean reset=false,download=true;/* reset is used to know if user logged out in order to reset the listView and the arrayLists..
                                                     download is used to know if user created poll to prevent from downloading it since created polls are directly sent to
                                                     the listView in the CurrentFragment*/
@@ -74,7 +69,6 @@ public class CurrentFragment extends Fragment {
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_current, container, false);
         getActivity().getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_HIDDEN);
-
         setHasOptionsMenu(true);
         initialize(view);
         initialize();
@@ -88,7 +82,7 @@ public class CurrentFragment extends Fragment {
                     intent = new Intent(getContext(), OwnerActivity.class);
                 else
                     intent=new Intent(getContext(),ParticipantActivity.class);
-                intent.putExtra("key",keys.get(position));
+                intent.putExtra("key",arrayList.get(position).getKey());
                 intent.putExtra("position",position);
                 startActivity(intent);
             }
@@ -101,11 +95,6 @@ public class CurrentFragment extends Fragment {
         pollAdapter = new PollAdapter(getActivity(), arrayList);
         listView = view.findViewById(R.id.current_listview);
         listView.setAdapter(pollAdapter);
-        keys=new ArrayList<>();
-        options=new ArrayList<>();
-        urls=new ArrayList<>();
-        types=new ArrayList<>();
-        details=new ArrayList<>();
     }
 
     public void initialize(){
@@ -119,64 +108,68 @@ public class CurrentFragment extends Fragment {
         databaseReference.addChildEventListener(new ChildEventListener() {
             @Override
             public void onChildAdded(@NonNull DataSnapshot dataSnapshot, @Nullable String s) {
-                if(download) { //to prevent downloading created polls by user, since they are passed to the arrayList of current polls with no need to download them again
-                    final String pollKey = dataSnapshot.getKey();
-                    DatabaseReference dbr = FirebaseDatabase.getInstance().getReference("polls").child(pollKey);
-                    dbr.addListenerForSingleValueEvent(new ValueEventListener() {
-                        @Override
-                        public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
-                            owner = dataSnapshot.child("owner_name").getValue().toString();
-                            title = dataSnapshot.child("title").getValue().toString();
-                            date = dataSnapshot.child("date").getValue().toString();
-                            time = dataSnapshot.child("time").getValue().toString();
-                            detail = dataSnapshot.child("details").getValue().toString();
-                            if (dataSnapshot.child("owner_id").getValue().toString().equals(firebaseUser.getUid()))
+                final String pollKey = dataSnapshot.getKey();
+                DatabaseReference dbr = FirebaseDatabase.getInstance().getReference("polls").child(pollKey);
+                dbr.addListenerForSingleValueEvent(new ValueEventListener() {
+                    @Override
+                    public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+                        String state = dataSnapshot.child("state").getValue().toString();
+                        if (download) { //to prevent downloading created polls by user, since they are passed to the arrayList of current polls with no need to download them again
+                            String owner = dataSnapshot.child("owner_name").getValue().toString();
+                            String ownerId = dataSnapshot.child("owner_id").getValue().toString();
+                            String title = dataSnapshot.child("title").getValue().toString();
+                            String date = dataSnapshot.child("date").getValue().toString();
+                            String time = dataSnapshot.child("time").getValue().toString();
+                            String details = dataSnapshot.child("details").getValue().toString();
+                            String type = dataSnapshot.child("type").getValue().toString();
+
+                            Iterator iterator = dataSnapshot.child("options").getChildren().iterator();
+                            StringBuilder choices = new StringBuilder();
+                            while (iterator.hasNext())
+                                choices.append(((DataSnapshot) iterator.next()).getKey()).append("#"); //choices concatenated by #
+                            if (ownerId.equals(firebaseUser.getUid()))
                                 owner = "by you";
                             else
                                 owner = "by \"" + owner + "\"";
-                            Object url = dataSnapshot.child("image_url").getValue();
-                            String state=dataSnapshot.child("state").getValue().toString();
-                            if (state.equals("opened")||state.equals("auto")) {
-                                arrayList.add(new PollView(null, title, owner, date + "\n" + time));
-                                if (url != null) {
-                                    urls.add(url.toString());
-                                    new ImageDownloader().execute(url.toString(), "" + pos);
-                                } else
-                                    urls.add(null);
-                                pos++;
-                                types.add(dataSnapshot.child("type").getValue().toString());
-                                keys.add(pollKey);
-                            }
-                            else {
-                                HistoryFragment.arrayList.add(new PollView(null, title, owner, date + "\n" + time));
-                                if (url != null) {
-                                    HistoryFragment.urls.add(url.toString());
-                                    new HistoryImageDownloader().execute(url.toString(), "" + historyPos);
-                                } else
-                                    HistoryFragment.urls.add(null);
-                                historyPos++;
-                                HistoryFragment.keys.add(pollKey);
-                            }
-                            Iterator iterator = dataSnapshot.child("options").getChildren().iterator();
-                            String string = "";
-                            while (iterator.hasNext())
-                                string += ((DataSnapshot) iterator.next()).getKey() + "#";
-                            if (state.equals("opened")||state.equals("auto")) {
-                                options.add(string);
-                                pollAdapter.notifyDataSetChanged();
-                                details.add(detail);
-                            } else {
-                                HistoryFragment.options.add(string);
-                                HistoryFragment.pollAdapter.notifyDataSetChanged();
-                                HistoryFragment.details.add(detail);
-                            }
-                        }
 
-                        @Override
-                        public void onCancelled(@NonNull DatabaseError databaseError) {
+                            Object u = dataSnapshot.child("image_url").getValue();
+                            String url = null;
+                            if (u != null)
+                                url = u.toString();
+
+                            if (state.equals("opened") || state.equals("auto")) {
+                                if (url != null)
+                                    new ImageDownloader().execute(pollKey);
+                                arrayList.add(new PollView(pollKey, null, title, owner, ownerId, date + "\n" + time, type, choices.toString(), url, details));
+                                pollAdapter.notifyDataSetChanged();
+                            } else {
+                                if (url != null)
+                                    new HistoryImageDownloader().execute(url.toString(), pollKey);
+                                HistoryFragment.arrayList.add(new PollView(pollKey, null, title, owner, ownerId, date + "\n" + time, type, choices.toString(), url, details));
+                                HistoryFragment.pollAdapter.notifyDataSetChanged();
+                            }
                         }
-                    });
-                }
+                        // now this listener is for opened or auto polls, when closed we need to move them from current to history
+                        if (state.equals("opened") || state.equals("auto")) {
+                            final DatabaseReference db = FirebaseDatabase.getInstance().getReference("polls").child(pollKey).child("state");
+                            db.addValueEventListener(new ValueEventListener() {
+                                @Override
+                                public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+                                    if (dataSnapshot.getValue().toString().equals("closed")) {
+                                        MainActivity.moveToHistory(pollKey);
+                                        db.removeEventListener(this); // when poll closed, remove the listener(no more need for it)
+                                    }
+                                }
+                                @Override
+                                public void onCancelled(@NonNull DatabaseError databaseError) { }
+                            });
+                        }
+                    }
+
+                    @Override
+                    public void onCancelled(@NonNull DatabaseError databaseError) {
+                    }
+                });
             }
             @Override
             public void onChildChanged(@NonNull DataSnapshot dataSnapshot, @Nullable String s) { }
@@ -193,8 +186,8 @@ public class CurrentFragment extends Fragment {
         int i;
         @Override
         protected Bitmap doInBackground(String... strings) {
-            i=Integer.parseInt(strings[1]);
-            String string=strings[0];
+            i=MainActivity.getPosition(arrayList,strings[0]);
+            String string=arrayList.get(i).getUrl();
             if(string!=null){
                 try{
                     URL url=new URL(string);
@@ -217,8 +210,8 @@ public class CurrentFragment extends Fragment {
         int i;
         @Override
         protected Bitmap doInBackground(String... strings) {
-            i=Integer.parseInt(strings[1]);
-            String string=strings[0];
+            i=MainActivity.getPosition(HistoryFragment.arrayList,strings[0]);
+            String string=HistoryFragment.arrayList.get(i).getUrl();
             if(string!=null){
                 try{
                     URL url=new URL(string);
@@ -241,20 +234,9 @@ public class CurrentFragment extends Fragment {
     public void onResume() {
         super.onResume();
         if(reset){ //this is true when user logs out and logs in again, so we need to clear all variables and fill the listViews with new data of the logged in account
-            historyPos=0;
             HistoryFragment.arrayList.clear();
-            HistoryFragment.keys.clear();
-            HistoryFragment.options.clear();
-            HistoryFragment.urls.clear();
             HistoryFragment.pollAdapter.notifyDataSetChanged();
-            HistoryFragment.details.clear();
-            pos=0;
             arrayList.clear();
-            keys.clear();
-            options.clear();
-            urls.clear();
-            types.clear();
-            details.clear();
             pollAdapter.notifyDataSetChanged();
             initialize(); // this initializes the firebase user
             fillArray();

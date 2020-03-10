@@ -31,8 +31,8 @@ public class NotificationBroadcastReceiver extends BroadcastReceiver {
         builder.setContentText(intent.getStringExtra("body"))
                 .setContentTitle(intent.getStringExtra("title"))
                 .setContentIntent(contentIntent)
-                .setSmallIcon(R.drawable.icon)
-                .setLargeIcon(BitmapFactory.decodeResource(context.getResources(), R.drawable.icon))
+                .setSmallIcon(R.drawable.notificationicon)
+                .setLargeIcon(BitmapFactory.decodeResource(context.getResources(), R.drawable.notificationicon))
                 .setAutoCancel(false);
         Notification notification=builder.build();
         notificationManager.notify(1, notification);

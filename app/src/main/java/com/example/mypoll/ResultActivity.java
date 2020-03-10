@@ -54,7 +54,7 @@ public class ResultActivity extends AppCompatActivity {
         setContentView(R.layout.activity_result);
         getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_HIDDEN);
         setSupportActionBar((Toolbar) findViewById(R.id.results_toolbar));
-        getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+        getSupportActionBar().setDisplayHomeAsUpEnabled(true); // this is for the back button in the action bar
         initialize();
         fillOptions();
         if(counter!=null)
@@ -67,15 +67,15 @@ public class ResultActivity extends AppCompatActivity {
         pollTitle=findViewById(R.id.result_poll_title);
         pollDetails=findViewById(R.id.result_poll_details);
         Intent intent=getIntent();
-        position=intent.getIntExtra("position",0);
         key=intent.getStringExtra("key");
+        position=MainActivity.getPosition(HistoryFragment.arrayList,key);
         pollTitle.setText(HistoryFragment.arrayList.get(position).getTitle());
         databaseReference= FirebaseDatabase.getInstance().getReference("polls").child(key).child("options");
         voters=new ArrayList<>();
-        String details=HistoryFragment.details.get(position);
+        String details=HistoryFragment.arrayList.get(position).getDetails();
         if(!details.equals(""))
             pollDetails.setText("Details: "+details);
-        if(HistoryFragment.urls.get(position)!=null) {
+        if(HistoryFragment.arrayList.get(position).getUrl()!=null) {
             counter = new CountDownTimer(60000, 1000) {
                 @Override
                 public void onTick(long mSUF) {
@@ -92,8 +92,8 @@ public class ResultActivity extends AppCompatActivity {
     }
 
     public void fillOptions(){
-        String[] options=HistoryFragment.options.get(position).split("#");
-        for(int i=0;i<options.length;i++) {
+        String[] choices=HistoryFragment.arrayList.get(position).getChoices().split("#");
+        for(int i=0;i<choices.length;i++) {
             voters.add(new ArrayList<String>());
             final LinearLayout linearLayout=new LinearLayout(this);
             linearLayout.setOrientation(LinearLayout.VERTICAL);
@@ -101,7 +101,7 @@ public class ResultActivity extends AppCompatActivity {
             final TextView votes=new TextView(this);
             TextView viewNames=new TextView(this);
             final int index=i;
-            databaseReference.child(options[i]).addChildEventListener(new ChildEventListener() {
+            databaseReference.child(choices[i]).addChildEventListener(new ChildEventListener() {
                 private int counter=0;
                 @Override
                 public void onChildAdded(@NonNull DataSnapshot dataSnapshot, @Nullable String s) {
@@ -122,7 +122,7 @@ public class ResultActivity extends AppCompatActivity {
                 @Override
                 public void onCancelled(@NonNull DatabaseError databaseError) { }
             });
-            option.setText("\""+options[i]+"\"");
+            option.setText("\""+choices[i]+"\"");
             votes.setText("votes: 0");
             viewNames.setTextColor(getResources().getColor(R.color.colorPrimaryDark));
             option.setTextColor(getResources().getColor(R.color.colorPrimary));
@@ -170,11 +170,6 @@ public class ResultActivity extends AppCompatActivity {
         if(item.getItemId()==R.id.delete){
             HistoryFragment.arrayList.remove(position);
             HistoryFragment.pollAdapter.notifyDataSetChanged();
-            HistoryFragment.urls.remove(position);
-            HistoryFragment.keys.remove(position);
-            HistoryFragment.options.remove(position);
-            HistoryFragment.details.remove(position);
-            CurrentFragment.historyPos--;
             ConnectivityManager connectivityManager = (ConnectivityManager)getSystemService(Context.CONNECTIVITY_SERVICE);
             if(!(connectivityManager.getNetworkInfo(ConnectivityManager.TYPE_MOBILE).getState() == NetworkInfo.State.CONNECTED ||
                     connectivityManager.getNetworkInfo(ConnectivityManager.TYPE_WIFI).getState() == NetworkInfo.State.CONNECTED)){

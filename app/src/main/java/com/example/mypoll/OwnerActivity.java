@@ -79,17 +79,17 @@ public class OwnerActivity extends AppCompatActivity {
         button=findViewById(R.id.close);
         date=findViewById(R.id.owner_poll_date);
         Intent intent=getIntent();
-        position=intent.getIntExtra("position",0);
         key=intent.getStringExtra("key");
+        position=MainActivity.getPosition(CurrentFragment.arrayList,key);
         pollKey.setText(key);
         pollTitle.setText(CurrentFragment.arrayList.get(position).getTitle());
         date.setText(CurrentFragment.arrayList.get(position).getDate());
         databaseReference= FirebaseDatabase.getInstance().getReference("polls").child(key);
         voters=new ArrayList<>();
-        String details=CurrentFragment.details.get(position);
+        String details=CurrentFragment.arrayList.get(position).getDetails();
         if(!details.equals(""))
             pollDetails.setText("Details: "+details);
-        if(CurrentFragment.urls.get(position)!=null) {
+        if(CurrentFragment.arrayList.get(position).getUrl()!=null) {
             counter = new CountDownTimer(60000, 1000) {
                 @Override
                 public void onTick(long mSUF) {
@@ -108,8 +108,8 @@ public class OwnerActivity extends AppCompatActivity {
     }
 
     public void fillOptions(){
-        String[] options=CurrentFragment.options.get(position).split("#");
-        for(int i=0;i<options.length;i++) {
+        String[] choices=CurrentFragment.arrayList.get(position).getChoices().split("#");
+        for(int i=0;i<choices.length;i++) {
             voters.add(new ArrayList<String>());
             final LinearLayout linearLayout=new LinearLayout(this);
             linearLayout.setOrientation(LinearLayout.VERTICAL);
@@ -117,7 +117,7 @@ public class OwnerActivity extends AppCompatActivity {
             final TextView votes=new TextView(this);
             TextView viewNames=new TextView(this);
             final int index=i;
-            databaseReference.child("options").child(options[i]).addChildEventListener(new ChildEventListener() {
+            databaseReference.child("choices").child(choices[i]).addChildEventListener(new ChildEventListener() {
                 private int counter=0;
                 @Override
                 public void onChildAdded(@NonNull DataSnapshot dataSnapshot, @Nullable String s) {
@@ -141,7 +141,7 @@ public class OwnerActivity extends AppCompatActivity {
             viewNames.setTextColor(getResources().getColor(R.color.colorPrimaryDark));
             option.setTextColor(getResources().getColor(R.color.colorPrimary));
             votes.setTextColor(getResources().getColor(R.color.colorPrimary));
-            option.setText("\""+options[i]+"\"");
+            option.setText("\""+choices[i]+"\"");
             SpannableString spannableString=new SpannableString("view voters");
             spannableString.setSpan(new UnderlineSpan(),0,spannableString.length(),0);
             viewNames.setText(spannableString);
@@ -179,7 +179,7 @@ public class OwnerActivity extends AppCompatActivity {
         ClipboardManager clipboard = (ClipboardManager) getSystemService(Context.CLIPBOARD_SERVICE);
         ClipData clip = ClipData.newPlainText("key",key);
         clipboard.setPrimaryClip(clip);
-        Toast.makeText(this,"Copied to clipboard",Toast.LENGTH_SHORT).show();
+        Toast.makeText(this,"Copied to Clip Tray",Toast.LENGTH_SHORT).show();
     }
 
 
@@ -211,19 +211,9 @@ public class OwnerActivity extends AppCompatActivity {
                     @Override
                     public void onCancelled(@NonNull DatabaseError databaseError) { }
                 });
-                HistoryFragment.arrayList.add(CurrentFragment.arrayList.remove(position));
-                CurrentFragment.pollAdapter.notifyDataSetChanged();
-                HistoryFragment.pollAdapter.notifyDataSetChanged();
-                HistoryFragment.urls.add(CurrentFragment.urls.remove(position));
-                HistoryFragment.keys.add(CurrentFragment.keys.remove(position));
-                HistoryFragment.options.add(CurrentFragment.options.remove(position));
-                HistoryFragment.details.add(CurrentFragment.details.remove(position));
-                CurrentFragment.types.remove(position);
-                CurrentFragment.pos--;
                 Intent intent=new Intent(getApplicationContext(),ResultActivity.class);
                 intent.putExtra("key",key);
-                intent.putExtra("position",CurrentFragment.historyPos);
-                CurrentFragment.historyPos++;
+                intent.putExtra("position",HistoryFragment.arrayList.size()-1);
                 startActivity(intent);
                 Toast.makeText(getApplicationContext(),"Closed Successfully",Toast.LENGTH_SHORT).show();
                 finish();
@@ -236,4 +226,5 @@ public class OwnerActivity extends AppCompatActivity {
         super.onStop();
         CurrentFragment.download=true;
     }
+
 }
