@@ -49,7 +49,9 @@ import java.util.TimeZone;
 /**
  * A simple {@link Fragment} subclass.
  */
-public class CreateJoinFragment extends Fragment {
+public class
+
+CreateJoinFragment extends Fragment {
     private Button create,join;
     private String title,key;
     private EditText editText1,editText2;
@@ -114,26 +116,22 @@ public class CreateJoinFragment extends Fragment {
                                                 {
                                                 if(state.equals("auto")){ // check if it will be auto closed
                                                     Calendar calendar=Calendar.getInstance(TimeZone.getTimeZone(Time.getCurrentTimezone()));
-                                                    SimpleDateFormat simpleDateFormat=new SimpleDateFormat("hh:mm:ss");
-                                                    try { //get current date and the date when poll was created to subtract and get difference in millis
-                                                        Date currentDate = simpleDateFormat.parse(simpleDateFormat.format(calendar.getTime()));
-                                                        Date createdDate = simpleDateFormat.parse(ds.child("time").getValue().toString());
-                                                        long difference=currentDate.getTime()-createdDate.getTime();
-                                                        if(difference>=60000){ // means more than 60 seconds of time passes so it must be closed and can't join it
-                                                            Toast.makeText(getContext(), "This poll is closed", Toast.LENGTH_SHORT).show();
-                                                            v.setClickable(true);
-                                                            break;
-                                                        }
-                                                        else{ // else => we can join, and put an alarm
-                                                            Intent i = new Intent(getContext(), NotificationBroadcastReceiver.class);
-                                                            i.putExtra("title", "Poll \""+ds.child("title").getValue().toString()+"\" is closed!");
-                                                            i.putExtra("body","Check out the results");
-                                                            i.putExtra("key",key);
-                                                            PendingIntent pendingIntent = PendingIntent.getBroadcast(getContext(),0, i, 0);
-                                                            AlarmManager alarmManager = (AlarmManager) getContext().getSystemService(Context.ALARM_SERVICE);
-                                                            alarmManager.set(AlarmManager.RTC_WAKEUP, System.currentTimeMillis() + difference, pendingIntent);
-                                                        }
-                                                    }catch(Exception e){}
+                                                    SimpleDateFormat simpleDateFormat=new SimpleDateFormat("HH:mm:ss"); //get current date and the date when poll was created to subtract and get difference in millis
+                                                    long difference=getTimeMillis(simpleDateFormat.format(calendar.getTime()))-getTimeMillis(ds.child("time").getValue().toString())+2000;
+                                                    Toast.makeText(getContext(),""+difference,Toast.LENGTH_LONG).show();
+                                                    if(difference>=60000){ // means more than 60 seconds of time passes so it must be closed and can't join it
+                                                        Toast.makeText(getContext(), "This poll is closed", Toast.LENGTH_SHORT).show();
+                                                        v.setClickable(true);
+                                                        break; // don't join since its closed
+                                                    }
+                                                    // here => we can join, and put an alarm
+                                                    Intent i = new Intent(getContext(), NotificationBroadcastReceiver.class);
+                                                    i.putExtra("title", "Poll \""+ds.child("title").getValue().toString()+"\" is closed!");
+                                                    i.putExtra("body","Check out the results");
+                                                    i.putExtra("key",key);
+                                                    PendingIntent pendingIntent = PendingIntent.getBroadcast(getContext(),0, i, 0);
+                                                    AlarmManager alarmManager = (AlarmManager) getContext().getSystemService(Context.ALARM_SERVICE);
+                                                    alarmManager.set(AlarmManager.RTC_WAKEUP, System.currentTimeMillis() + difference, pendingIntent);
                                                 }
                                                 databaseReference.child("users").child(firebaseUser.getUid()).child("polls").child(key).setValue("");
                                                 databaseReference.child("polls").child(key).child("participants").child(firebaseUser.getUid()).setValue("");
@@ -206,6 +204,13 @@ public class CreateJoinFragment extends Fragment {
         firebaseAuth=FirebaseAuth.getInstance();
         firebaseUser=firebaseAuth.getCurrentUser();
     }
-
+    public long getTimeMillis(String time){
+        long t=0;
+        String[] string=time.split(":");
+        t+=Integer.parseInt(string[0])*60*60*1000;
+        t+=Integer.parseInt(string[1])*60*1000;
+        t+=Integer.parseInt(string[2])*1000;
+        return t;
+    }
 
 }

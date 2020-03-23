@@ -70,7 +70,7 @@ public class ResultActivity extends AppCompatActivity {
         key=intent.getStringExtra("key");
         position=MainActivity.getPosition(HistoryFragment.arrayList,key);
         pollTitle.setText(HistoryFragment.arrayList.get(position).getTitle());
-        databaseReference= FirebaseDatabase.getInstance().getReference("polls").child(key).child("options");
+        databaseReference= FirebaseDatabase.getInstance().getReference("polls").child(key).child("choices");
         voters=new ArrayList<>();
         String details=HistoryFragment.arrayList.get(position).getDetails();
         if(!details.equals(""))

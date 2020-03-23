@@ -123,7 +123,7 @@ public class CurrentFragment extends Fragment {
                             String details = dataSnapshot.child("details").getValue().toString();
                             String type = dataSnapshot.child("type").getValue().toString();
 
-                            Iterator iterator = dataSnapshot.child("options").getChildren().iterator();
+                            Iterator iterator = dataSnapshot.child("choices").getChildren().iterator();
                             StringBuilder choices = new StringBuilder();
                             while (iterator.hasNext())
                                 choices.append(((DataSnapshot) iterator.next()).getKey()).append("#"); //choices concatenated by #

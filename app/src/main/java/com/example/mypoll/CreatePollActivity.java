@@ -82,10 +82,10 @@ public class CreatePollActivity extends AppCompatActivity {
     private DatabaseReference databaseReference,usersReference;
     private StorageReference storageReference;
     private String pollKey,pollTitle,pollDetails;
-    private HashMap<String,Object> options;
+    private HashMap<String,Object> choices;
     private HashMap<String,Object> info;
     private SharedPreferences sharedPreferences;
-    private String filtered=".$[]#/",pollOptions="";
+    private String filtered=".$[]#/",pollChoices="";
     private InputFilter[] inputFilters;
     private Switch switchButton;
     private int i=2;
@@ -111,7 +111,7 @@ public class CreatePollActivity extends AppCompatActivity {
         storageReference= FirebaseStorage.getInstance().getReference("polls").child(pollKey);
         usersReference=FirebaseDatabase.getInstance().getReference("users").child(firebaseUser.getUid());
         title.setText(getIntent().getStringExtra("title"));
-        options=new HashMap<>();
+        choices=new HashMap<>();
         info=new HashMap<>();
         progressDialog=new ProgressDialog(this);
         progressDialog.setMessage("Please wait...");
@@ -197,19 +197,31 @@ public class CreatePollActivity extends AppCompatActivity {
             if(option.equals("")){
                 Toast.makeText(this,"Choices can't be empty",Toast.LENGTH_SHORT).show();
                 progressDialog.dismiss();
-                options.clear();
-                pollOptions="";
+                choices.clear();
+                pollChoices="";
                 return;
             }
             else {
-                options.put(option, "");
-                pollOptions+=option+"#";
+                choices.put(option, "");
+                pollChoices+=option+"#";
             }
         }
+
+        // check if there are identical choices
+        String[] ss=pollChoices.split("#");
+        for(int k=0; k<ss.length; k++)
+            for(int l=k+1; l<ss.length; l++)
+                if(ss[k].equals(ss[l])){
+                    Toast.makeText(this,"Some choices are duplicated",Toast.LENGTH_SHORT).show();
+                    progressDialog.dismiss();
+                    choices.clear();
+                    pollChoices="";
+                    return;
+                }
         Calendar calendar=Calendar.getInstance(TimeZone.getTimeZone(Time.getCurrentTimezone()));
         SimpleDateFormat simpleDateFormat=new SimpleDateFormat("dd MMM, yyyy");
         final String currentDate=simpleDateFormat.format(calendar.getTime());
-        simpleDateFormat=new SimpleDateFormat("hh:mm:ss");
+        simpleDateFormat=new SimpleDateFormat("HH:mm:ss");
         final String currentTime=simpleDateFormat.format(calendar.getTime());
         final String pollType=spinner.getSelectedItem().toString();
         info.put("owner_name",sharedPreferences.getString("user_name",""));
@@ -238,7 +250,7 @@ public class CreatePollActivity extends AppCompatActivity {
                     if (task.isSuccessful()) {
                         final String imageUrl=task.getResult().toString();
                         info.put("image_url", imageUrl);
-                        databaseReference.child("options").setValue(options);
+                        databaseReference.child("choices").setValue(choices);
                         databaseReference.updateChildren(info).addOnCompleteListener(new OnCompleteListener<Void>() {
                             @Override
                             public void onComplete(@NonNull Task<Void> task) {
@@ -248,10 +260,8 @@ public class CreatePollActivity extends AppCompatActivity {
                                         Bitmap bitmap=null;
                                         try {
                                             bitmap = MediaStore.Images.Media.getBitmap(getContentResolver(), uri);
-                                        } catch (IOException e) {
-                                            e.printStackTrace();
-                                        }
-                                        addPoll(new PollView(pollKey,bitmap,pollTitle,"by you",firebaseUser.getUid(),currentDate+"\n"+currentTime,pollType,pollOptions,imageUrl,pollDetails));
+                                        } catch (IOException e) { e.printStackTrace(); }
+                                        addPoll(new PollView(pollKey,bitmap,pollTitle,"by you",firebaseUser.getUid(),currentDate+"\n"+currentTime,pollType,pollChoices,imageUrl,pollDetails));
                                     }
                                 });
                             }
@@ -263,14 +273,14 @@ public class CreatePollActivity extends AppCompatActivity {
             });
         }
         else {
-            databaseReference.child("options").setValue(options);
+            databaseReference.child("choices").setValue(choices);
             databaseReference.updateChildren(info).addOnCompleteListener(new OnCompleteListener<Void>() {
                 @Override
                 public void onComplete(@NonNull Task<Void> task) {
                     usersReference.child("polls").child(pollKey).setValue("").addOnCompleteListener(new OnCompleteListener<Void>() {
                         @Override
                         public void onComplete(@NonNull Task<Void> task) {
-                            addPoll(new PollView(pollKey,null,pollTitle,"by you",firebaseUser.getUid(),currentDate+"\n"+currentTime,pollType,pollOptions,null,pollDetails));
+                            addPoll(new PollView(pollKey,null,pollTitle,"by you",firebaseUser.getUid(),currentDate+"\n"+currentTime,pollType,pollChoices,null,pollDetails));
                         }
                     });
                 }

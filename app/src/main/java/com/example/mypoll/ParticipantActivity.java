@@ -121,7 +121,7 @@ public class ParticipantActivity extends AppCompatActivity {
                 public void onFinish() { }
             };
         }
-        databaseReference= FirebaseDatabase.getInstance().getReference("polls").child(key).child("options");
+        databaseReference= FirebaseDatabase.getInstance().getReference("polls").child(key).child("choices");
         builder = new AlertDialog.Builder(this);
         builder.setIcon(android.R.drawable.ic_dialog_alert).setPositiveButton("Ok", null);
         selections=new ArrayList<>();
@@ -201,47 +201,67 @@ public class ParticipantActivity extends AppCompatActivity {
             return;
         }
         progressDialog.show();
-        builder.setTitle("Are you sure?").setPositiveButton("Yes", new DialogInterface.OnClickListener() {
+        FirebaseDatabase.getInstance().getReference("polls").child(key).child("state").addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
-            public void onClick(DialogInterface dialog, int which) {
-                HashMap<String,Object> hashMap=new HashMap<>();
-                hashMap.put(sharedPreferences.getString("user_name",""),"");
-                if(selection!=null) // if the poll is multiple choice, then this variable will stay null
-                    databaseReference.child(selection).updateChildren(hashMap);
-                else { // in the else we will iterate in the choices made by user and associate his name with each one in the database
-                    for (int i = 0; i < selections.size(); i++)
-                        databaseReference.child(selections.get(i)).updateChildren(hashMap);
+            public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+                if(dataSnapshot.getValue().toString().equals("closed")){
+                    Toast.makeText(getApplicationContext(),"Can't vote, poll is closed",Toast.LENGTH_SHORT).show();
+                    finish();
+                    progressDialog.dismiss();
                 }
-                final DatabaseReference db=FirebaseDatabase.getInstance().getReference();
-                db.child("polls").child(key).child("owner_id").addListenerForSingleValueEvent(new ValueEventListener() {
-                    @Override
-                    public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
-                        HashMap<String,Object> notify=new HashMap<>();
-                        notify.put("title","\""+sharedPreferences.getString("user_name","")+"\" voted on your poll \""+CurrentFragment.arrayList.get(position).getTitle()+"\"");
-                        notify.put("body","Check out");
-                        notify.put("type","vote");
-                        db.child("notifications").child(dataSnapshot.getValue().toString()).push().setValue(notify).addOnCompleteListener(new OnCompleteListener<Void>() {
-                            @Override
-                            public void onComplete(@NonNull Task<Void> task) {
-                                if(task.isSuccessful()){
-                                    db.child("users").child(FirebaseAuth.getInstance().getCurrentUser().getUid()).child("polls").child(key).setValue("voted");
-                                    Toast.makeText(getApplicationContext(),"Voted Successfully",Toast.LENGTH_SHORT).show();
-                                    view.setClickable(false);
-                                    view.setAlpha(0);
-                                    wait.setAlpha(1);
-                                    for(int i=0;i<buttonsLayout.getChildCount();i++)
-                                        buttonsLayout.getChildAt(i).setClickable(false);
-                                }
-                                else
-                                    Toast.makeText(getApplicationContext(),"Oops, looks like an error happened!",Toast.LENGTH_SHORT).show();
-                                progressDialog.dismiss();
+                else{
+                    builder.setTitle("Are you sure?").setPositiveButton("Yes", new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialog, int which) {
+                            HashMap<String,Object> hashMap=new HashMap<>();
+                            hashMap.put(sharedPreferences.getString("user_name",""),"");
+                            if(selection!=null) // if the poll is multiple choice, then this variable will stay null
+                                databaseReference.child(selection).updateChildren(hashMap);
+                            else { // in the else we will iterate in the choices made by user and associate his name with each one in the database
+                                for (int i = 0; i < selections.size(); i++)
+                                    databaseReference.child(selections.get(i)).updateChildren(hashMap);
                             }
-                        });
-                    }
-                    @Override
-                    public void onCancelled(@NonNull DatabaseError databaseError) { }
-                });
+                            final DatabaseReference db=FirebaseDatabase.getInstance().getReference();
+                            db.child("polls").child(key).child("owner_id").addListenerForSingleValueEvent(new ValueEventListener() {
+                                @Override
+                                public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+                                    HashMap<String,Object> notify=new HashMap<>();
+                                    notify.put("title","\""+sharedPreferences.getString("user_name","")+"\" voted on your poll \""+CurrentFragment.arrayList.get(position).getTitle()+"\"");
+                                    notify.put("body","Check out");
+                                    notify.put("type","vote");
+                                    db.child("notifications").child(dataSnapshot.getValue().toString()).push().setValue(notify).addOnCompleteListener(new OnCompleteListener<Void>() {
+                                        @Override
+                                        public void onComplete(@NonNull Task<Void> task) {
+                                            if(task.isSuccessful()){
+                                                db.child("users").child(FirebaseAuth.getInstance().getCurrentUser().getUid()).child("polls").child(key).setValue("voted");
+                                                Toast.makeText(getApplicationContext(),"Voted Successfully",Toast.LENGTH_SHORT).show();
+                                                view.setClickable(false);
+                                                view.setAlpha(0);
+                                                wait.setAlpha(1);
+                                                for(int i=0;i<buttonsLayout.getChildCount();i++)
+                                                    buttonsLayout.getChildAt(i).setClickable(false);
+                                            }
+                                            else
+                                                Toast.makeText(getApplicationContext(),"Oops, looks like an error happened!",Toast.LENGTH_SHORT).show();
+                                            progressDialog.dismiss();
+                                        }
+                                    });
+                                }
+                                @Override
+                                public void onCancelled(@NonNull DatabaseError databaseError) { }
+                            });
+                        }
+                    }).setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+                                @Override
+                                public void onClick(DialogInterface dialog, int which) {
+                                    progressDialog.dismiss();
+                                }
+                            }
+                            ).show();
+                }
             }
-        }).setNegativeButton("Cancel",null).show();
+            @Override
+            public void onCancelled(@NonNull DatabaseError databaseError) { }
+        });
     }
 }
